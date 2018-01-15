@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:section >
+    <f:entry field="disablePublish" title="禁用发布消息" description="禁用后在构建结束时将不会发送任何微信消息">
+                <f:checkbox default="${instance.disablePublish}" />
+            </f:entry>
+        <f:entry title="接收者" field="receiver" description="企业微信应用每天发送消息数有限制的，一般为当前企业上限人数 * 30,发送到部门以部门总人数计算条数，请尽量缩小发送范围">
+            <f:repeatable name="receivers" var="receiver" items="${instance.receivers}" minimum="1">
+              <table class="center-align">
+                <tr>
+                  <td>
+                    <f:entry title="类型" field="type">
+                      <f:select class="setting-input" name="type" default="${receiver.type}" />
+                    </f:entry>
+                  </td>
+                  <td>
+                    <f:entry title="请选择" field="id">
+                     <f:select default="${receiver.id}"/>
+                    </f:entry>
+
+                  </td>
+                  <td>
+                    <f:entry title="" field="">
+                      <div align="right"> <f:repeatableDeleteButton /> </div>
+                    </f:entry>
+                  </td>
+                </tr>
+              </table>
+            </f:repeatable>
+        </f:entry>
+
+        <f:entry field="successMsg" title="${%Success Message}" description="${%description(rootURL)}">
+            <f:textarea />
+        </f:entry>
+        <f:entry field="failedMsg" title="${%Failed Message}"  description="${%description(rootURL)}">
+            <f:textarea />
+        </f:entry>
+    </f:section>
+</j:jelly>

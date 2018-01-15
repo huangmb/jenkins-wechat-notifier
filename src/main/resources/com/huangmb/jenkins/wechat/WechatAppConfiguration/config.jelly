@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:section title="${%Wechat Notify}">
+        <f:entry field="corpId" title="${%CorpId}">
+            <f:textbox/>
+        </f:entry>
+        <f:entry field="secret" title="${%Secret}">
+            <f:password/>
+        </f:entry>
+        <f:entry field="agentId" title="${%AgentId}">
+            <f:textbox/>
+        </f:entry>
+    </f:section>
+     <f:section >
+             <f:entry title="自定义分组" description="将一部分企业微信用户添加到自定义分组中，仅在Jenkins使用，不影响企业微信的通讯录">
+                 <f:repeatable name="customGroups" var="group" items="${instance.customGroups}">
+                   <table class="center-align">
+                     <tr>
+                       <td>
+                         <f:entry title="分组名称" field="name">
+                            <f:textbox default="${group.name}"/>
+                         </f:entry>
+                       </td>
+                       <td>
+                         <f:entry title="分组成员" >
+                          <f:repeatable name="users" var="user" items="${group.users}" minimum="1">
+                              <table class="center-align">
+                                 <tr>
+                                   <td>
+                                     <f:entry title="请选择" field="idAndName">
+                                      <f:select default="${user.id + '@' + user.name}"/>
+                                     </f:entry>
+                                   </td>
+                                   <td>
+                                     <f:entry title="" field="">
+                                       <div align="right"> <f:repeatableDeleteButton /> </div>
+                                     </f:entry>
+                                   </td>
+                                 </tr>
+                              </table>
+                           </f:repeatable>
+                         </f:entry>
+
+                       </td>
+                       <td>
+                         <f:entry title="" field="">
+                           <div align="right"> <f:repeatableDeleteButton /> </div>
+                         </f:entry>
+                       </td>
+                     </tr>
+                   </table>
+                 </f:repeatable>
+             </f:entry>
+         </f:section>
+</j:jelly>
