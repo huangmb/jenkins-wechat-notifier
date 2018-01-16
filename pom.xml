@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.huangmb.jenkins</groupId>
     <artifactId>wechat-notify</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.3-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <properties>
         <jenkins.version>1.625.3</jenkins.version>
@@ -27,14 +27,14 @@
     </licenses>
 
 
-    <!-- If you want this to appear on the wiki page:
+    <!-- If you want this to appear on the wiki page:-->
     <developers>
       <developer>
-        <id>bhacker</id>
-        <name>Bob Q. Hacker</name>
-        <email>bhacker@nowhere.net</email>
+        <id>huangmb</id>
+        <name>huangmb</name>
+        <email>huangmb413@163.com</email>
       </developer>
-    </developers> -->
+    </developers>
 
     <!-- Assuming you want to host on @jenkinsci:
     <scm>

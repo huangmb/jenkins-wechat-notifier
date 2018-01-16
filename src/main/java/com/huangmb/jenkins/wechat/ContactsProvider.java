@@ -7,10 +7,7 @@ import com.huangmb.jenkins.wechat.bean.WechatUser;
 import hudson.util.ListBoxModel;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ContactsProvider {
     private List<WechatUser> users;
@@ -86,6 +83,12 @@ public class ContactsProvider {
             for (List<WechatUser> userList : departmentAndUserMap.values()) {
                 users.addAll(userList);
             }
+            Collections.sort(users,new Comparator<WechatUser>() {
+                @Override
+                public int compare(WechatUser u1, WechatUser u2) {
+                    return u1.getName().compareTo(u2.getName());
+                }
+            });
         }
     }
     private void loadTagIfNeeded() {
