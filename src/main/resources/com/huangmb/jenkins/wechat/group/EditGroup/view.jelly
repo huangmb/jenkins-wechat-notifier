@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+    <table width="100%">
+        <tr align="left">
+            <th>序号</th>
+            <th>成员</th>
+        </tr>
+        <j:forEach var="user" items="${it.userNames}" indexVar="index">
+            <tr>
+                <td>${index}</td>
+                <td>
+                    ${user}
+                </td>
+            </tr>
+        </j:forEach>
+    </table>
+</j:jelly>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+    <l:layout title="微信群聊">
+        <l:side-panel>
+            <st:include page="sidepanel.jelly"/>
+        </l:side-panel>
+        <l:main-panel>
+          <h1>企业微信</h1>
+            <div>支持将Jenkins构建消息发送到企业应用或群聊中</div>
+            <div>在构建任务中添加"构建后操作",选择"微信通知",配置接收对象和消息模版即可</div>
+        </l:main-panel>
+
+    </l:layout>
+
+</j:jelly>

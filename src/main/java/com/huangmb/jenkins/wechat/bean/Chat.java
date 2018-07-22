@@ -5,17 +5,32 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CustomGroup {
+/**
+ * Created by bob.huang on 2018/7/9
+ */
+public class Chat {
+    private String chatId;
     private String name;
+    private String owner;
     private List<String> users = new ArrayList<>();
 
-    public CustomGroup() {
+    public Chat() {
     }
 
     @DataBoundConstructor
-    public CustomGroup(String name, List<String> users) {
+    public Chat(String chatId, String name, String owner, List<String> users) {
+        this.chatId = chatId;
         this.name = name;
+        this.owner = owner;
         this.users = users;
+    }
+
+    public String getChatId() {
+        return chatId;
+    }
+
+    public void setChatId(String chatId) {
+        this.chatId = chatId;
     }
 
     public String getName() {
@@ -24,6 +39,14 @@ public class CustomGroup {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
     }
 
     public List<String> getUsers() {

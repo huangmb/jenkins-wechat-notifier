@@ -1,5 +1,6 @@
 package com.huangmb.jenkins.wechat;
 
+import com.huangmb.jenkins.wechat.bean.Chat;
 import com.huangmb.jenkins.wechat.bean.CustomGroup;
 import com.huangmb.jenkins.wechat.bean.Receiver;
 import com.huangmb.jenkins.wechat.bean.WechatUser;
@@ -87,7 +88,8 @@ public class WechatNotifier extends Notifier {
             logger.println("本次构建不发布微信消息，启用微信通知请在设置中取消勾选禁用发送");
             return true;
         }
-        Set<String> userSet = new HashSet<>(), partySet = new HashSet<>(), tagSet = new HashSet<>();
+        Set<String> userSet = new HashSet<>(), partySet = new HashSet<>()
+                , tagSet = new HashSet<>(), chatSet = new HashSet<>();
         if (receivers != null) {
             for (Receiver receiver : receivers) {
                 if ("-1".equals(receiver.getId())) {
@@ -107,10 +109,22 @@ public class WechatNotifier extends Notifier {
                         List<CustomGroup> customGroups = ContactsProvider.getInstance().getCustomGroups();
                         for (CustomGroup group : customGroups) {
                             if (StringUtils.equals(group.getName(), receiver.getId())) {
-                                List<WechatUser> users = group.getUsers();
-                                for (WechatUser user : users) {
-                                    userSet.add(user.getId());
+                                List<String> users = group.getUsers();
+                                for (String user : users) {
+                                    if("-1".equals(user)) {
+                                        continue;
+                                    }
+                                    userSet.add(user);
                                 }
+                                break;
+                            }
+                        }
+                        break;
+                    case "chat":
+                        List<Chat> chats = ContactsProvider.getInstance().getChats();
+                        for (Chat chat : chats) {
+                            if (StringUtils.equals(chat.getChatId(), receiver.getId())) {
+                                chatSet.add(receiver.getId());
                                 break;
                             }
                         }
@@ -125,7 +139,9 @@ public class WechatNotifier extends Notifier {
 //        System.out.println(party);
 //        System.out.println(tag);
 
-        if (StringUtils.isBlank(user) && StringUtils.isBlank(party) && StringUtils.isBlank(tag)) {
+        boolean hasReceiver = !StringUtils.isBlank(user) || !StringUtils.isBlank(party) || !StringUtils.isBlank(tag);
+        boolean hasChat = !chatSet.isEmpty();
+        if (!hasReceiver && !hasChat) {
             logger.println("未填写任何微信接收人，无法发送微信通知");
             return true;
         }
@@ -138,9 +154,17 @@ public class WechatNotifier extends Notifier {
         //填充环境变量
         msg = env.expand(msg);
         logger.println("微信通知内容: " + msg);
+
         try {
-            String resp = WeChatAPI.sendMsg(user, party, tag, msg);
-            checkResp(resp, logger);
+            if (hasReceiver) {
+                String resp = WeChatAPI.sendMsg(user, party, tag, msg);
+                checkResp(resp, logger);
+            }
+            for (String chatId : chatSet) {
+                String resp = WeChatAPI.sendChatMsg(chatId, msg);
+                checkResp(resp, logger);
+            }
+
         } catch (Exception e) {
             logger.println("微信通知发送失败: " + e.getMessage());
         }

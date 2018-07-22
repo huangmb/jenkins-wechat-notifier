@@ -1,6 +1,6 @@
 package com.huangmb.jenkins.wechat;
 
-
+import com.huangmb.jenkins.wechat.bean.Chat;
 import com.huangmb.jenkins.wechat.bean.WechatDepartment;
 import com.huangmb.jenkins.wechat.bean.WechatTag;
 import com.huangmb.jenkins.wechat.bean.WechatUser;
@@ -22,16 +22,32 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class WeChatAPI {
+    private static final Logger LOGGER = Logger.getLogger(WeChatAPI.class.getName());
     private static final String GET = "GET";
     private static final String POST = "POST";
 
+    //获取token
     private static final String ACCESS_TOKEN_URL = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=%s&corpsecret=%s";
+    //推送消息
     private static final String SEND_URL = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=%s";
+    //获取部门
     private static final String GET_DEPARTMENT_URL = "https://qyapi.weixin.qq.com/cgi-bin/department/list?access_token=%s";// + "&id=%s";
+    //获取部门成员
     private static final String GET_USER_BY_DEPARTMENT = "https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token=%s&department_id=%s&fetch_child=%d";
+    //获取标签
     private static final String GET_TAGS_URL = "https://qyapi.weixin.qq.com/cgi-bin/tag/list?access_token=%s";
+    //创建群聊
+    private static final String CREATE_CHAT = "https://qyapi.weixin.qq.com/cgi-bin/appchat/create?access_token=%s";
+    //推送群聊消息
+    private static final String SEND_CHAT = "https://qyapi.weixin.qq.com/cgi-bin/appchat/send?access_token=%s";
+    //获取群聊信息
+    private static final String GET_CHAT = "https://qyapi.weixin.qq.com/cgi-bin/appchat/get?access_token=%s&chatid=%s";
+    //更新群聊信息
+    private static final String UPDATE_CHAT= "https://qyapi.weixin.qq.com/cgi-bin/appchat/update?access_token=%s";
 
     private static final String CONFIG_FILE = AccessToken.class.getName() + ".xml";
     private static AccessToken accessToken;
@@ -72,7 +88,6 @@ public class WeChatAPI {
     /**
      * 获取部门
      *
-     * @return
      */
     public static List<WechatDepartment> getDepartments() {
         List<WechatDepartment> list = new ArrayList<>();
@@ -98,7 +113,7 @@ public class WeChatAPI {
             }
             return list;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "error in get dep req", e);
         }
         return null;
     }
@@ -106,7 +121,6 @@ public class WeChatAPI {
     /**
      * 获取所有成员
      *
-     * @return
      */
     public static Map<String,List<WechatUser>> getAllUsers(List<WechatDepartment> departments) {
         List<WechatDepartment> rootDepartments = Utils.getRootDepartments(departments);
@@ -136,11 +150,14 @@ public class WeChatAPI {
             }
             return map;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "error in get user req", e);
         }
         return null;
     }
 
+    /**
+     * @return 所有标签
+     */
     public static List<WechatTag> getAllTags() {
 
         try {
@@ -164,7 +181,7 @@ public class WeChatAPI {
                 return list;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "error in get tag req", e);
         }
         return null;
     }
@@ -183,9 +200,95 @@ public class WeChatAPI {
             token.setExpiresIn((System.currentTimeMillis() / 1000 + expires_in) + "");
             return token;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "error in get token req", e);
             throw new IllegalStateException("获取微信Token失败");
         }
+    }
+
+    /**
+     * 创建群聊
+     * @param name 群聊名称,不可为空
+     * @param user 成员id列表,不少于2人
+     * @param owner 群主,如果为空则从列表随机选取一人
+     * @return 群聊id
+     */
+    public static String createChat(String name, List<String> user,String owner){
+        if (StringUtils.isBlank(name)) {
+            throw new IllegalArgumentException("必须指定群聊名");
+        }
+        if (user == null || user.size() < 2) {
+            throw new IllegalArgumentException("成员不少于2人");
+        }
+
+        try {
+            AccessToken accessToken = getAccessToken();
+            String request = String.format(CREATE_CHAT,accessToken.getToken());
+            JSONObject params = new JSONObject();
+            params.put("name",name);
+            if (!StringUtils.isBlank(owner)) {
+                params.put("owner",owner);
+            }
+            params.put("userlist",JSONArray.fromObject(user));
+            String res = post(request,params.toString());
+            JSONObject obj = JSONObject.fromObject(res);
+            if (obj.getInt("errcode") == 0) {
+                return obj.optString("chatid");
+            } else {
+                LOGGER.log(Level.WARNING, obj.toString());
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "error in create chat", e);
+        }
+        return null;
+    }
+
+    /**
+     * 发送群消息
+     * @param chatId 群id
+     * @param msg 消息
+     */
+    public static String sendChatMsg(String chatId,String msg) {
+        try {
+            JSONObject params = new JSONObject();
+            params.put("chatid",chatId);
+            params.put("msgtype","text");
+            JSONObject content = new JSONObject();
+            content.put("content", msg);
+            params.put("text", content);
+            AccessToken accessToken = getAccessToken();
+            String query = String.format(SEND_CHAT, accessToken.getToken());
+            return post(query, params.toString());
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "error in send chat msg", e);
+        }
+        return null;
+    }
+
+    /**
+     * 获取群聊信息
+     * @param id 群id
+     */
+    public static Chat getChat(String id) {
+        try {
+            String request =String.format(GET_CHAT,getAccessToken().getToken(),id);
+            String res = get(request);
+            JSONObject obj = JSONObject.fromObject(res);
+            if (obj.getInt("errcode") == 0) {
+                JSONObject chatInfo = obj.getJSONObject("chat_info");
+                Chat chat = new Chat();
+                chat.setChatId(chatInfo.optString("chatid"));
+                chat.setName(chatInfo.optString("name"));
+                chat.setOwner(chatInfo.optString("owner"));
+                List<String> users = (List<String>) JSONArray.toCollection(chatInfo.optJSONArray("userlist"));
+                chat.setUsers(users);
+                return chat;
+            } else {
+                LOGGER.log(Level.WARNING, obj.toString());
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "error in get chat req", e);
+        }
+        return null;
     }
 
     private static String get(String path) {
@@ -200,7 +303,7 @@ public class WeChatAPI {
                 return IOUtils.toString(inputStream);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "error in req " + path, e);
         }
         return "";
     }
@@ -225,7 +328,7 @@ public class WeChatAPI {
                 return IOUtils.toString(inputStream);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "error in post " + path, e);
         }
         return "";
     }
@@ -256,7 +359,7 @@ public class WeChatAPI {
                 xmlFile.unmarshal(accessToken);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "error in load token", e);
         }
     }
     private static void saveAccessToken() {
@@ -264,7 +367,7 @@ public class WeChatAPI {
             XmlFile xmlFile = new XmlFile(new File(Jenkins.getInstance().getRootDir(), CONFIG_FILE));
             xmlFile.write(accessToken);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "error in save token", e);
         }
     }
 }

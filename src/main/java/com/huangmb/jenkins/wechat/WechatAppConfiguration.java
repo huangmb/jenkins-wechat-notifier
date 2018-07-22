@@ -1,6 +1,7 @@
 package com.huangmb.jenkins.wechat;
 
 import com.huangmb.jenkins.wechat.bean.CustomGroup;
+import com.huangmb.jenkins.wechat.bean.Chat;
 import com.huangmb.jenkins.wechat.bean.WechatUser;
 import hudson.Extension;
 import hudson.util.FormValidation;
@@ -30,7 +31,8 @@ public class WechatAppConfiguration extends GlobalConfiguration {
     private String corpId;
     private String agentId;
     private String secret;
-    private List<CustomGroup> customGroups = new ArrayList<>();
+    private List<Chat> chats = new ArrayList<>();
+    private List<CustomGroup> groups = new ArrayList<>();
 
     public WechatAppConfiguration() {
         // When Jenkins is restarted, load any saved configuration from disk.
@@ -61,13 +63,31 @@ public class WechatAppConfiguration extends GlobalConfiguration {
         return secret;
     }
 
-    public List<CustomGroup> getCustomGroups() {
-        return customGroups;
+    public List<CustomGroup> getGroups() {
+        return groups;
     }
 
     @DataBoundSetter
-    public void setCustomGroups(List<CustomGroup> customGroups) {
-        this.customGroups = customGroups;
+    public void setGroups(List<CustomGroup> groups) {
+        this.groups = groups;
+        save();
+    }
+
+    public List<Chat> getChats() {
+        return chats;
+    }
+
+    @DataBoundSetter
+    public void setChats(List<Chat> chats) {
+        this.chats = chats;
+        save();
+    }
+
+    public void addChat(Chat chat) {
+        if (chats == null) {
+            chats = new ArrayList<>();
+        }
+        chats.add(chat);
         save();
     }
 
@@ -95,13 +115,23 @@ public class WechatAppConfiguration extends GlobalConfiguration {
     }
 
     public ListBoxModel doFillIdAndNameItems() {
-        List<WechatUser> users = ContactsProvider.getInstance().getAllUsers();
-        ListBoxModel model = new ListBoxModel();
-        model.add("选择一个用户","-1");
-        for (WechatUser user : users) {
-            model.add(user.getName(),user.getId()+ "@"+user.getName());
+        return Utils.createUserItems();
+    }
+
+    public ListBoxModel doFillChatUserItems() {
+       return doFillIdAndNameItems();
+    }
+
+    public FormValidation doRefreshContacts(@QueryParameter String corpId, @QueryParameter String secret) {
+        System.out.println("重置缓存");
+        try {
+            WeChatAPI.fetchAccessToken(corpId,secret);
+            ContactsProvider.getInstance().getAllUsers();
+            return FormValidation.ok("刷新完成");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return model;
+        return FormValidation.error("企业id或应用密钥不正确");
     }
 
     public FormValidation doCheckCorpId(@QueryParameter String value) {

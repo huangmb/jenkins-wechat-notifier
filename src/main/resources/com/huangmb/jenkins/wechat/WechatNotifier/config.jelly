@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <f:section >
     <f:entry field="disablePublish" title="禁用发布消息" description="禁用后在构建结束时将不会发送任何微信消息">
                 <f:checkbox default="${instance.disablePublish}" />
             </f:entry>
@@ -11,7 +10,7 @@
                 <tr>
                   <td>
                     <f:entry title="类型" field="type">
-                      <f:select class="setting-input" name="type" default="${receiver.type}" />
+                      <f:select default="${receiver.type}" />
                     </f:entry>
                   </td>
                   <td>
@@ -36,5 +35,4 @@
         <f:entry field="failedMsg" title="${%Failed Message}"  description="${%description(rootURL)}">
             <f:textarea />
         </f:entry>
-    </f:section>
 </j:jelly>

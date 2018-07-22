@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+    <l:side-panel>
+        <l:tasks>
+            <l:task href="chat/create" title="创建群聊" icon="new-package.png" permission="${app.WRITE}"/>
+            <l:task href="group/create" title="创建自定义分组" icon="new-package.png" permission="${app.WRITE}"/>
+            <l:task href="chat" title="查看群聊" icon="gear.png"/>
+            <l:task href="group" title="查看自定义分组" icon="gear.png"/>
+        </l:tasks>
+    </l:side-panel>
+</j:jelly>

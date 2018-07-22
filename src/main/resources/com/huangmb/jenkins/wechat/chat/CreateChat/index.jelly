@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout">
+    <l:layout title="新建群聊" permission="${app.WRITE}">
+        <l:side-panel>
+            <l:tasks>
+                <l:task href="../" title="返回列表" icon="gear.png"/>
+            </l:tasks>
+        </l:side-panel>
+        <l:main-panel>
+            <h1>新建群聊</h1>
+            <div style="color:red">${it.errorMsg}</div>
+            <f:form action="configSubmit" method="post" name="createChat">
+                <j:set var="instance" value="${it}"/>
+                <j:set var="descriptor" value="${it.descriptor}"/>
+                <f:entry title="群名称" field="name" description="尽量不要重命名群名称">
+                    <f:textbox default="${it.name}"/>
+                </f:entry>
+                <f:entry title="选择群成员" description="群成员不得少于2人,第1个成员默认为群主">
+                    <f:repeatable name="users" var="user" items="${it.users}" minimum="2">
+                        <table class="center-align" width="100%">
+                            <tr>
+                                <td width="80%">
+                                    <f:select default="${user}" field="user"/>
+                                </td>
+                                <td>
+                                    <f:repeatableDeleteButton/>
+                                </td>
+                            </tr>
+                        </table>
+                    </f:repeatable>
+                </f:entry>
+                <f:entry field="sayHello" title="打个招呼" description="创建后立即在群里打个招呼(忽略可不填)">
+                    <f:textbox field="sayHello"/>
+                </f:entry>
+                <f:entry>
+                    <f:submit value="创建"/>
+                    <f:apply/>
+                </f:entry>
+            </f:form>
+
+        </l:main-panel>
+    </l:layout>
+
+</j:jelly>

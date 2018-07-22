@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+    <l:layout title="详情">
+
+        <l:side-panel>
+            <l:tasks>
+                <l:task href="../" title="返回列表" icon="gear.png"/>
+            </l:tasks>
+        </l:side-panel>
+        <l:main-panel>
+            <h1>${it.name}</h1>
+
+            <h3>群主 ${it.owner}</h3>
+
+            <h3>群成员</h3>
+            <table width="100%">
+                <tr align="left">
+                    <th width="10%">序号</th>
+                    <th>成员</th>
+                </tr>
+                <j:forEach var="user" items="${it.users}" indexVar="index">
+                    <tr>
+                        <td>${index}</td>
+                        <td>
+                            ${user}
+                        </td>
+                    </tr>
+                </j:forEach>
+            </table>
+            <div id="editChatContainer">
+                <f:bottomButtonBar>
+                    <j:if test="${h.hasPermission(app.ADMINISTER)}">
+                    <div class="yui-button danger">
+                        <button onclick="showDeleteChatDialog()" tooltip="从Jenkins中移除该群聊,不会删除微信中的群聊">移除</button>
+                    </div>
+                    <div class="yui-button">
+                        <button onclick="refreshChat()" tooltip="从微信服务器更新群聊信息">更新</button>
+                    </div>
+                    </j:if>
+                </f:bottomButtonBar>
+
+                <div id="simpledialog1" style="visibility:hidden">
+                    <div class="bd">
+                        确定移除群聊 ${it.name}<br/>仅从Jenkins列表中移除,如果删除群聊自行从企业微信中移除
+                    </div>
+                </div>
+            </div>
+            <div>提示:群聊信息可在企业微信中自行修改</div>
+            <script>
+                function refreshChat() {
+                    var form = document.createElement('form');
+                    form.setAttribute('method', 'POST');
+                    form.setAttribute('action', 'refreshChat');
+                    crumb.appendToForm(form);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+                function showDeleteChatDialog() {
+                    var dialog = new YAHOO.widget.SimpleDialog("simpledialog1",
+                            {
+                                width: "300px",
+                                fixedcenter: true,
+                                visible: false,
+                                draggable: false,
+                                close: true,
+                                text: "",
+                                icon: YAHOO.widget.SimpleDialog.ICON_WARN,
+                                constraintoviewport: true,
+                                buttons: [{text: "Yes", handler: handleYes, isDefault: true},
+                                    {text: "No", handler: handleNo}]
+                            });
+                    dialog.setHeader("确定删除?")
+                    dialog.render('editChatContainer')
+                    dialog.show();
+
+                    function handleYes() {
+                        var form = document.createElement('form');
+                        form.setAttribute('method', 'POST');
+                        form.setAttribute('action', 'delete');
+                        crumb.appendToForm(form);
+                        document.body.appendChild(form);
+                        form.submit();
+                        dialog.hide();
+                    }
+
+                    function handleNo() {
+                        dialog.hide();
+                    }
+                }
+            </script>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

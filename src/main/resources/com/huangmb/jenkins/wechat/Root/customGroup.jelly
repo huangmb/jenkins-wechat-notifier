@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout">
+
+    <f:section title="自定义分组">
+    <f:entry description="将一部分企业微信用户添加到自定义分组中，仅在Jenkins使用，不影响企业微信的通讯录">
+        <f:repeatable name="customGroups" var="group" items="${it.customGroups}"
+                      noAddButton="true">
+            <table class="center-align">
+                <tr>
+                    <td>
+                        <f:optionalBlock title="${group.name}">
+                        <f:entry title="分组成员">
+                                        <f:repeatable name="users" var="user" items="${group.users}"
+                                                      minimum="1" noAddButton="true">
+
+                                            <table class="center-align">
+                                                <tr>
+                                                    <td>
+                                                        ${user.name}
+                                                    </td>
+                                                </tr>
+                                            </table>
+
+                                        </f:repeatable>
+                        </f:entry>
+                        </f:optionalBlock>
+                        <!-- <f:entry title="分组名称" field="name">
+                             <f:readOnlyTextbox default="${group.name}"/>
+                         </f:entry>-->
+                    </td>
+                    <!-- <td>
+                         <f:entry title="分组成员">
+                             <f:repeatable name="users" var="user" items="${group.users}"
+                                           minimum="1" noAddButton="true">
+                                 <table class="center-align">
+                                     <tr>
+                                         <td>
+                                             ${user.name}
+                                         </td>
+                                     </tr>
+                                 </table>
+                             </f:repeatable>
+                         </f:entry>
+
+                     </td>-->
+                </tr>
+            </table>
+        </f:repeatable>
+    </f:entry>
+    </f:section>
+</j:jelly>

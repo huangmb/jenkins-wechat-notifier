@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+    <l:layout title="自定义分组">
+        <l:side-panel>
+            <l:tasks>
+                <l:task href="../" title="返回企业微信" icon="gear.png"/>
+                <l:task href="create" title="创建分组" icon="new-package.png" permission="${app.WRITE}"/>
+                <l:task href="../chat" title="查看群聊" icon="gear.png"/>
+            </l:tasks>
+        </l:side-panel>
+        <l:main-panel>
+            <h1>自定义分组</h1>
+            <div>
+                将部分用户归纳成组,方便选择,消息通过企业应用群发给用户
+            </div>
+            <j:if test="${it.customGroups.isEmpty()}">
+                <l:task href="create" title="创建第一个分组" icon="new-package.png" permission="${app.WRITE}"/>
+            </j:if>
+            <j:if test="${!it.customGroups.isEmpty()}">
+                <f:entry>
+                    <div>共有${it.customGroups.size()}个分组</div>
+                </f:entry>
+                <table  width="100%">
+                    <tr align="left" >
+                        <th width="10%">序号</th>
+                        <th align="left">分组名称</th>
+                    </tr>
+                    <j:forEach var="group" items="${it.customGroups}" indexVar="index">
+                        <tr >
+                            <td ><f:link href="${index}" >${index}</f:link></td>
+                            <td >
+                                <f:link href="${index}" >${group.name}</f:link>
+                            </td>
+                        </tr>
+                    </j:forEach>
+                </table>
+
+            </j:if>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

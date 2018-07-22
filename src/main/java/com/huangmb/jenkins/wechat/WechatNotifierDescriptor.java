@@ -1,12 +1,12 @@
 package com.huangmb.jenkins.wechat;
 
+import com.huangmb.jenkins.wechat.bean.Chat;
 import com.huangmb.jenkins.wechat.bean.CustomGroup;
 import com.huangmb.jenkins.wechat.bean.WechatDepartment;
 import com.huangmb.jenkins.wechat.bean.WechatTag;
 import com.huangmb.jenkins.wechat.bean.WechatUser;
 import hudson.Extension;
 import hudson.model.AbstractProject;
-import hudson.model.Descriptor;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Publisher;
 import hudson.util.ListBoxModel;
@@ -45,6 +45,7 @@ public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
     public ListBoxModel doFillTypeItems() {
         ListBoxModel model = new ListBoxModel();
         model.add("个人", "user");
+        model.add("群聊", "chat");
         model.add("部门", "party");
         model.add("标签", "tag");
         model.add("自定义分组", "group");
@@ -87,6 +88,14 @@ public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
                 model.add(title,"-1");
                 for (CustomGroup customGroup : customGroups) {
                     model.add(customGroup.getName());
+                }
+                return model;
+            case "chat":
+                List<Chat> chats = ContactsProvider.getInstance().getChats();
+                title = chats.isEmpty() ? "无群聊" : "请选择一个群聊";
+                model.add(title,"-1");
+                for (Chat chat : chats) {
+                    model.add(chat.getName(), chat.getChatId());
                 }
                 return model;
             default:

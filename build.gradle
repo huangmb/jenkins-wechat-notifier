@@ -1,0 +1,34 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        jcenter()
+    }
+}
+plugins {
+    id "org.jenkins-ci.jpi" version "0.16.0"
+}
+
+group = "com.huangmb.jenkins"
+version = "1.0.3-SNAPSHOT"
+description = "wechat notify"
+
+repositories {
+    mavenLocal()
+    jcenter()
+}
+jenkinsPlugin {
+    coreVersion = "1.642.1"                                               // Version of Jenkins core this plugin depends on.
+    displayName = "Hello World plugin built with Gradle"                // Human-readable name of plugin.
+    url = "http://wiki.jenkins-ci.org/display/JENKINS/SomePluginPage"   // URL for plugin on Jenkins wiki or elsewhere.
+    gitHubUrl = "https://github.com/huangmb/jenkins-wechat-notifier"              // Plugin URL on GitHub. Optional.
+    shortName = "wechat-notify"                                           // Plugin ID, defaults to the project name without trailing '-plugin'
+    workDir = file('tmp/jenkins')
+    // The developers section is optional, and corresponds to the POM developers section.
+    developers {
+        developer {
+            id "huangmb"
+            name "huangmb"
+            email "huangmb413@163.com"
+        }
+    }
+}

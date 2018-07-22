@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+    <l:layout title="详情">
+        <l:side-panel>
+            <l:tasks>
+                <l:task href="../" title="返回列表" icon="gear.png"/>
+            </l:tasks>
+        </l:side-panel>
+        <l:main-panel>
+            <h1>${it.name}</h1>
+            <h3>分组成员</h3>
+            <st:include page="view.jelly"/>
+            <j:if test="${h.hasPermission(app.WRITE)}">
+                <div id="editGroupContainer">
+                    <f:bottomButtonBar>
+                        <f:link href="config">
+                            <div class="yui-button">
+                                <button>编辑</button>
+                            </div>
+                        </f:link>
+                        <div class="yui-button danger">
+                            <button onclick="showDeleteChatDialog()">删除分组</button>
+                        </div>
+                    </f:bottomButtonBar>
+
+                    <div id="simpledialog1" style="visibility:hidden">
+                    </div>
+                </div>
+
+            </j:if>
+
+
+            <script>
+                function showDeleteChatDialog() {
+                    var dialog = new YAHOO.widget.SimpleDialog("simpledialog1",
+                            {
+                                width: "300px",
+                                fixedcenter: true,
+                                visible: false,
+                                draggable: false,
+                                close: true,
+                                text: "确定移除分组 ${it.name}",
+                                icon: YAHOO.widget.SimpleDialog.ICON_WARN,
+                                constraintoviewport: true,
+                                buttons: [{text: "Yes", handler: handleYes, isDefault: true},
+                                    {text: "No", handler: handleNo}]
+                            });
+                    dialog.setHeader("确定删除?")
+                    dialog.render('editGroupContainer')
+                    dialog.show();
+
+                    function handleYes() {
+                        var form = document.createElement('form');
+                        form.setAttribute('method', 'POST');
+                        form.setAttribute('action', 'delete');
+                        crumb.appendToForm(form);
+                        document.body.appendChild(form);
+                        form.submit();
+                        dialog.hide();
+                    }
+
+                    function handleNo() {
+                        dialog.hide();
+                    }
+                }
+            </script>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

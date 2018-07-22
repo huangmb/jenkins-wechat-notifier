@@ -2,3 +2,5 @@
 /work
 /.idea
 *.iml
+/.gradle
+/tmp
