@@ -155,7 +155,11 @@ public class WechatAppConfiguration extends GlobalConfiguration {
     public FormValidation doRefreshContacts(@QueryParameter String corpId, @QueryParameter String secret) {
         try {
             WeChatAPI.fetchAccessToken(corpId,secret);
+            invalidateToken();
             ContactsProvider.getInstance().getAllUsers();
+            this.corpId = corpId;
+            this.secret = secret;
+            save();
             return FormValidation.ok("刷新完成");
         } catch (Exception e) {
             e.printStackTrace();

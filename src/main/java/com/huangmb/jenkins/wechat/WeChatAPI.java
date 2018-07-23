@@ -135,16 +135,19 @@ public class WeChatAPI {
                 if (obj.getInt("errcode") == 0) {
                     JSONArray userList = obj.getJSONArray("userlist");
                     int size = userList.size();
-                    List<WechatUser> list = new ArrayList<>();
-                    map.put(department.getId(),list);
                     for (int i = 0; i < size; i++) {
                         JSONObject user = userList.getJSONObject(i);
                         String userId = user.getString("userid");
                         String name = user.getString("name");
+                        JSONArray dep = user.optJSONArray("department");
+
                         WechatUser u = new WechatUser();
                         u.setId(userId);
                         u.setName(name);
-                        list.add(u);
+
+                        for (int j = 0, n = dep.size(); j < n; j++) {
+                            addToDepartment(map, dep.optString(j), u);
+                        }
                     }
                 }
             }
@@ -155,6 +158,14 @@ public class WeChatAPI {
         return null;
     }
 
+    private static void addToDepartment(Map<String,List<WechatUser>> map, String depId, WechatUser user) {
+        List<WechatUser> userList = map.get(depId);
+        if (userList == null) {
+            userList = new ArrayList<>();
+            map.put(depId, userList);
+        }
+        userList.add(user);
+    }
     /**
      * @return 所有标签
      */
