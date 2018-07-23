@@ -13,7 +13,7 @@
             <f:form action="configSubmit" method="post" name="createChat">
                 <j:set var="instance" value="${it}"/>
                 <j:set var="descriptor" value="${it.descriptor}"/>
-                <f:entry title="群名称" field="name" description="尽量不要重命名群名称">
+                <f:entry title="群名称" field="name">
                     <f:textbox default="${it.name}"/>
                 </f:entry>
                 <f:entry title="选择群成员" description="群成员不得少于2人,第1个成员默认为群主">
