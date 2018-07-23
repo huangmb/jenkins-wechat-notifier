@@ -12,7 +12,7 @@
             <f:textbox/>
         </f:entry>
         <f:entry>
-            <f:validateButton title="刷新通讯录" method="refreshContacts" progress="正在刷新" with="corp,secret"/>
+            <f:validateButton title="刷新通讯录" method="refreshContacts" progress="正在刷新" with="corpId,secret"/>
         </f:entry>
     </f:section>
 

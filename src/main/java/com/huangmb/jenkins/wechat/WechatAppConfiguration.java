@@ -153,7 +153,6 @@ public class WechatAppConfiguration extends GlobalConfiguration {
     }
 
     public FormValidation doRefreshContacts(@QueryParameter String corpId, @QueryParameter String secret) {
-        System.out.println("重置缓存");
         try {
             WeChatAPI.fetchAccessToken(corpId,secret);
             ContactsProvider.getInstance().getAllUsers();

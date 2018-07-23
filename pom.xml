@@ -17,7 +17,8 @@
     </properties>
     <name>Wechat Notify</name>
     <description>wechat notify</description>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/Wechat+Plugin</url>
+    <!--<url>https://wiki.jenkins-ci.org/display/JENKINS/Wechat+Plugin</url>-->
+    <url>https://github.com/huangmb/jenkins-wechat-notifier</url>
     <!-- The default licence for Jenkins OSS Plugins is MIT. Substitute for the applicable one if needed.-->
     <licenses>
         <license>
