@@ -4,7 +4,6 @@
     <f:entry field="disablePublish" title="禁用发布消息" description="禁用后在构建结束时将不会发送任何微信消息">
         <f:checkbox default="${instance.disablePublish}"/>
     </f:entry>
-    <f:optionalBlock title="显示接收人员" name="showReceiver">
     <f:entry field="receiver" description="企业微信应用每天发送消息数有限制的，一般为当前企业上限人数 * 30,发送到部门以部门总人数计算条数，请尽量缩小发送范围">
         <f:repeatable name="receivers" var="receiver" items="${instance.receivers}" minimum="1">
             <table class="center-align">
@@ -31,7 +30,6 @@
             </table>
         </f:repeatable>
     </f:entry>
-    </f:optionalBlock>
 
     <f:entry field="successMsg" title="${%Success Message}" description="${%description(rootURL)}">
         <f:textarea/>
