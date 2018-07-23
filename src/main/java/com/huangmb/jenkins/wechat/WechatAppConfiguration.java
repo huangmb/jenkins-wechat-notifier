@@ -34,9 +34,39 @@ public class WechatAppConfiguration extends GlobalConfiguration {
     private List<Chat> chats = new ArrayList<>();
     private List<CustomGroup> groups = new ArrayList<>();
 
+    //兼容旧数据
+    private List<CustomGroup> customGroups = new ArrayList<>();
+
     public WechatAppConfiguration() {
         // When Jenkins is restarted, load any saved configuration from disk.
         load();
+        upgradeOldData();
+    }
+
+    //兼容旧数据,将原来保存为WechatUser类型的旧分组数据升级为仅保存id的新分组
+    private void upgradeOldData() {
+        if (customGroups.isEmpty()) {
+            return;
+        }
+        for (CustomGroup group : customGroups) {
+            List users = group.getUsers();
+            List<String> userIdList = new ArrayList<>();
+            group.setUsers(userIdList);
+            groups.add(group);
+            for (Object user : users) {
+                String uid;
+                if (user instanceof WechatUser) {
+                    uid = ((WechatUser)user).getId();
+                } else {
+                    uid = (String)user;
+                }
+                if (StringUtils.isNotBlank(uid) && !StringUtils.equals("-1",uid)) {
+                    userIdList.add(uid);
+                }
+            }
+        }
+        customGroups.clear();
+        save();
     }
 
     public String getCorpId() {

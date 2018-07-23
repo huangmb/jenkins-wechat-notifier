@@ -1,19 +1,16 @@
 package com.huangmb.jenkins.wechat;
 
-import com.huangmb.jenkins.wechat.bean.Chat;
-import com.huangmb.jenkins.wechat.bean.CustomGroup;
+import com.huangmb.jenkins.wechat.chat.ChatConfig;
+import com.huangmb.jenkins.wechat.group.CustomGroupConfig;
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.model.RootAction;
-import hudson.security.Permission;
-import hudson.util.FormApply;
 import jenkins.model.Jenkins;
 import jenkins.model.ModelObjectWithContextMenu;
-import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
-import org.kohsuke.stapler.interceptor.RequirePOST;
 
-import javax.servlet.ServletException;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -44,23 +41,11 @@ public class Root implements RootAction,ModelObjectWithContextMenu {
         return null;
     }
 
-    @RequirePOST
-    public HttpResponse doDeleteChat(StaplerRequest req) throws ServletException {
-        Jenkins.getInstance().checkPermission(Permission.WRITE);
-        System.out.println("删除群聊");
-        return FormApply.success("./");
-    }
-
-    public List<Chat> getChats() {
-        return WechatAppConfiguration.get().getChats();
-    }
-
-    public List<CustomGroup> getCustomGroups() {
-        return WechatAppConfiguration.get().getGroups();
-    }
-
     public List<WechatConfig> getAll() {
-        return WechatConfig.all();
+        ExtensionList<WechatConfig> list = Jenkins.getInstance().getExtensionList(WechatConfig.class);
+        CustomGroupConfig groupConfig = list.get(CustomGroupConfig.class);
+        ChatConfig chatConfig = list.get(ChatConfig.class);
+        return Arrays.asList(groupConfig, chatConfig);
     }
 
     @Override
