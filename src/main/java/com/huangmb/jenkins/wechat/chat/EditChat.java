@@ -54,6 +54,10 @@ public class EditChat extends WechatConfig {
         return name;
     }
 
+    public String getChatId() {
+        return this.chat.getChatId();
+    }
+
     public List<String> getUsers() {
         return ContactsProvider.getInstance().getUserNames(users);
     }

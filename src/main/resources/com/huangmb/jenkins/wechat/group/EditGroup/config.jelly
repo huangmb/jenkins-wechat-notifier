@@ -16,15 +16,21 @@
                 <f:entry title="分组名称" field="name">
                     <f:textbox default="${it.name}"/>
                 </f:entry>
-                <f:entry title="选择分组成员">
+                <f:entry title="选择成员">
                     <f:repeatable name="users" var="user" items="${it.users}" minimum="1">
                         <table class="center-align" width="100%">
                             <tr>
-                                <td width="80%">
-                                    <f:select default="${user}" field="user"/>
+                                <td>
+                                    <f:entry field="user">
+                                        <f:select default="${user}" />
+                                    </f:entry>
                                 </td>
                                 <td>
-                                    <f:repeatableDeleteButton/>
+                                    <f:entry title="" field="">
+                                        <div align="right">
+                                            <f:repeatableDeleteButton/>
+                                        </div>
+                                    </f:entry>
                                 </td>
                             </tr>
                         </table>

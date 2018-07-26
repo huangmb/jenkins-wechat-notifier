@@ -12,7 +12,7 @@
             <h1>${it.name}</h1>
 
             <h3>群主 ${it.owner}</h3>
-
+            <div>群ID: ${it.chatId}</div>
             <h3>群成员</h3>
             <table width="100%">
                 <tr align="left">

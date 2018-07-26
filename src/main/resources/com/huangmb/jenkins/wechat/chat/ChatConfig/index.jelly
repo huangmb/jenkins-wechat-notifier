@@ -19,18 +19,18 @@
             </j:if>
             <j:if test="${!it.chats.isEmpty()}">
                 <f:entry>
-               <div>共有${it.chats.size()}个群聊</div>
+                    <div>共有${it.chats.size()}个群聊</div>
                 </f:entry>
-                <table  width="100%">
-                    <tr align="left" >
+                <table width="100%">
+                    <tr align="left">
                         <th width="10%">序号</th>
                         <th align="left">群聊名称</th>
                     </tr>
                     <j:forEach var="chat" items="${it.chats}" indexVar="index">
-                        <tr >
-                            <td >${index}</td>
-                            <td >
-                                <f:link href="${index}" >${chat.name}</f:link>
+                        <tr>
+                            <td>${index}</td>
+                            <td>
+                                <f:link href="${index}">${chat.name}</f:link>
                             </td>
                         </tr>
                     </j:forEach>

@@ -10,7 +10,7 @@
         <l:main-panel>
             <h1>新建分组</h1>
             <div style="color:red">${it.errorMsg}</div>
-            <f:form action="configSubmit" method="post" name="createGroup">
+            <f:form action="configSubmit" method="post" name="createGroup" tableClass="config-table scrollspy">
                 <j:set var="instance" value="${it}"/>
                 <j:set var="descriptor" value="${it.descriptor}"/>
                 <f:entry title="分组名称" field="name">
@@ -20,11 +20,17 @@
                     <f:repeatable name="users" var="user" items="${it.users}" minimum="1">
                         <table class="center-align" width="100%">
                             <tr>
-                                <td width="80%">
-                                    <f:select default="${user}" field="user"/>
+                                <td>
+                                    <f:entry field="user">
+                                        <f:select default="${user}" />
+                                    </f:entry>
                                 </td>
                                 <td>
-                                    <f:repeatableDeleteButton/>
+                                    <f:entry title="" field="">
+                                        <div align="right">
+                                            <f:repeatableDeleteButton/>
+                                        </div>
+                                    </f:entry>
                                 </td>
                             </tr>
                         </table>

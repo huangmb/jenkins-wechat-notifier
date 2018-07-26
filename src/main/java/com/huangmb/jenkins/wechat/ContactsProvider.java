@@ -5,6 +5,7 @@ import com.huangmb.jenkins.wechat.bean.Chat;
 import com.huangmb.jenkins.wechat.bean.WechatDepartment;
 import com.huangmb.jenkins.wechat.bean.WechatTag;
 import com.huangmb.jenkins.wechat.bean.WechatUser;
+import hudson.util.ListBoxModel;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
@@ -15,7 +16,9 @@ public class ContactsProvider {
     private List<WechatTag> tags;
     //部门-部门人员
     private Map<String, List<WechatUser>> departmentAndUserMap;
-    private Map<String,String> userIdAndNameMap;
+    private Map<String, String> userIdAndNameMap;
+
+    private ListBoxModel userModel;
 
     private static class ContactsProviderHolder {
         private static ContactsProvider INSTANCE = new ContactsProvider();
@@ -43,9 +46,21 @@ public class ContactsProvider {
         return users == null ? new ArrayList<WechatUser>() : users;
     }
 
+    public ListBoxModel createUserItems() {
+        if (userModel == null) {
+            userModel = new ListBoxModel();
+            userModel.add("选择一个用户", "-1");
+
+            for (WechatUser user : getAllUsers()) {
+                userModel.add(user.getName(), user.getId());
+            }
+        }
+        return userModel;
+    }
+
     public List<String> getUserNames(List<String> ids) {
-       loadUserAndDepartmentListIfNeeded();
-       List<String> names = new ArrayList<>();
+        loadUserAndDepartmentListIfNeeded();
+        List<String> names = new ArrayList<>();
         for (String id : ids) {
             String name = userIdAndNameMap.get(id);
             if (name == null) {
@@ -65,7 +80,7 @@ public class ContactsProvider {
         return name;
     }
 
-    public List<CustomGroup> getCustomGroups(){
+    public List<CustomGroup> getCustomGroups() {
         List<CustomGroup> groups = WechatAppConfiguration.get().getGroups();
         return groups == null ? new ArrayList<CustomGroup>() : groups;
     }
@@ -82,6 +97,7 @@ public class ContactsProvider {
         userIdAndNameMap = null;
         departments = null;
         tags = null;
+        userModel = null;
     }
 
     private void loadUserAndDepartmentListIfNeeded() {
@@ -114,9 +130,9 @@ public class ContactsProvider {
                 users.addAll(userList);
             }
             for (WechatUser user : users) {
-                userIdAndNameMap.put(user.getId(),user.getName());
+                userIdAndNameMap.put(user.getId(), user.getName());
             }
-            Collections.sort(users,new Comparator<WechatUser>() {
+            Collections.sort(users, new Comparator<WechatUser>() {
                 @Override
                 public int compare(WechatUser u1, WechatUser u2) {
                     return u1.getName().compareToIgnoreCase(u2.getName());
@@ -126,6 +142,7 @@ public class ContactsProvider {
 
         }
     }
+
     private void loadTagIfNeeded() {
         if (tags == null) {
             tags = WeChatAPI.getAllTags();

@@ -54,13 +54,7 @@ public class Utils {
     }
 
     public static ListBoxModel createUserItems() {
-        List<WechatUser> users = ContactsProvider.getInstance().getAllUsers();
-        ListBoxModel model = new ListBoxModel();
-        model.add("选择一个用户", "-1");
-        for (WechatUser user : users) {
-            model.add(user.getName(), user.getId());
-        }
-        return model;
+        return ContactsProvider.getInstance().createUserItems();
     }
 
     public static String getCurrentUserName() {

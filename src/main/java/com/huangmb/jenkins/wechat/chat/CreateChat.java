@@ -1,23 +1,18 @@
 package com.huangmb.jenkins.wechat.chat;
 
-import com.huangmb.jenkins.wechat.ContactsProvider;
 import com.huangmb.jenkins.wechat.Utils;
 import com.huangmb.jenkins.wechat.WeChatAPI;
 import com.huangmb.jenkins.wechat.WechatAppConfiguration;
 import com.huangmb.jenkins.wechat.WechatConfig;
 import com.huangmb.jenkins.wechat.bean.Chat;
-import com.huangmb.jenkins.wechat.bean.WechatUser;
 import hudson.Extension;
-import hudson.model.AbstractProject;
 import hudson.security.Permission;
 import hudson.util.FormApply;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
@@ -85,6 +80,28 @@ public class CreateChat extends WechatConfig {
         return FormApply.success("../");
     }
 
+    @RequirePOST
+    public HttpResponse doCreateFromId(StaplerRequest req) throws ServletException {
+        Jenkins.getInstance().checkPermission(Permission.WRITE);
+        setErrorMsg(null);//重置错误提示
+        String chatId = req.getSubmittedForm().optString("chatId");
+        if (StringUtils.isBlank(chatId)) {
+            return failOnCheckParameters(req, "群ID为空");
+        }
+        List<Chat> chats = WechatAppConfiguration.get().getChats();
+        for (Chat chat : chats) {
+            if (StringUtils.equals(chatId,chat.getChatId())) {
+                return failOnCheckParameters(req, "已在群列表中");
+            }
+        }
+        Chat chat = WeChatAPI.getChat(chatId);
+        if (chat == null) {
+            return failOnCheckParameters(req,"群ID无效");
+        }
+        WechatAppConfiguration.get().addChat(chat);
+        reset();
+        return FormApply.success("../");
+    }
 
     protected void bindForm(JSONObject form) {
         name = form.optString("name");
@@ -122,8 +139,18 @@ public class CreateChat extends WechatConfig {
            return Utils.createUserItems();
         }
 
-        public FormValidation doCheckName(@QueryParameter String name, @AncestorInPath AbstractProject project) {
+        public FormValidation doCheckName(@QueryParameter String name) {
             return checkNotNull(name);
+        }
+
+        public FormValidation doCheckChatId(@QueryParameter String chatId) {
+            List<Chat> chats = WechatAppConfiguration.get().getChats();
+            for (Chat chat : chats) {
+                if (StringUtils.equals(chatId,chat.getChatId())) {
+                    return FormValidation.error("该群已在列表中");
+                }
+            }
+            return FormValidation.ok();
         }
 
 

@@ -10,7 +10,7 @@
         <l:main-panel>
             <h1>新建群聊</h1>
             <div style="color:red">${it.errorMsg}</div>
-            <f:form action="configSubmit" method="post" name="createChat">
+            <f:form action="configSubmit" method="post" name="createChat" tableClass="config-table scrollspy">
                 <j:set var="instance" value="${it}"/>
                 <j:set var="descriptor" value="${it.descriptor}"/>
                 <f:entry title="群名称" field="name">
@@ -20,11 +20,17 @@
                     <f:repeatable name="users" var="user" items="${it.users}" minimum="2">
                         <table class="center-align" width="100%">
                             <tr>
-                                <td width="80%">
-                                    <f:select default="${user}" field="user"/>
+                                <td>
+                                    <f:entry field="user">
+                                        <f:select default="${user}"/>
+                                    </f:entry>
                                 </td>
                                 <td>
-                                    <f:repeatableDeleteButton/>
+                                    <f:entry title="" field="">
+                                        <div align="right">
+                                            <f:repeatableDeleteButton/>
+                                        </div>
+                                    </f:entry>
                                 </td>
                             </tr>
                         </table>
@@ -38,7 +44,17 @@
                     <f:apply/>
                 </f:entry>
             </f:form>
+            <div style="padding-top: 80px">
+                <f:form action="createFromId" method="post" name="createWithId" tableClass="config-table scrollspy">
+                    <f:entry field="chatId" title="导入群聊" description="根据已有群里的id导入群聊">
+                        <f:textbox field="chatId"/>
+                    </f:entry>
+                    <f:entry>
+                        <f:submit value="导入群聊"/>
+                    </f:entry>
+                </f:form>
 
+            </div>
         </l:main-panel>
     </l:layout>
 
