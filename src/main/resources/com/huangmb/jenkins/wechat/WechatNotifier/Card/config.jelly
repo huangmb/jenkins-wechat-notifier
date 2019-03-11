@@ -1,0 +1,16 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry title="${%Title}">
+        <f:textbox name="title" value="${msgType.title}"/>
+    </f:entry>
+    <f:entry title="${%Content}" description="${%description(rootURL)}">
+        <f:textarea name="description" value="${msgType.description}" codemirror-mode="text/html" codemirror-config="lineNumbers: true, matchBrackets: true"/>
+    </f:entry>
+    <f:entry title="${%URL}">
+        <f:textbox name="url" value="${msgType.url}"/>
+    </f:entry>
+    <f:entry title="'更多'按钮文字">
+        <f:textbox name="btnText" value="${msgType.btnText}"/>
+    </f:entry>
+</j:jelly>

@@ -9,10 +9,17 @@ import hudson.model.Items;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.multipart.FilePart;
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
+import org.apache.commons.httpclient.methods.multipart.Part;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -47,7 +54,9 @@ public class WeChatAPI {
     //获取群聊信息
     private static final String GET_CHAT = "https://qyapi.weixin.qq.com/cgi-bin/appchat/get?access_token=%s&chatid=%s";
     //更新群聊信息
-    private static final String UPDATE_CHAT= "https://qyapi.weixin.qq.com/cgi-bin/appchat/update?access_token=%s";
+    private static final String UPDATE_CHAT = "https://qyapi.weixin.qq.com/cgi-bin/appchat/update?access_token=%s";
+
+    private static final String UPLOAD_MEDIA = "https://qyapi.weixin.qq.com/cgi-bin/media/upload?access_token=%s&type=%s";
 
     private static final String CONFIG_FILE = AccessToken.class.getName() + ".xml";
     private static AccessToken accessToken;
@@ -55,21 +64,9 @@ public class WeChatAPI {
     static {
         Items.XSTREAM.registerConverter(new AccessTokenConverter());
     }
-    /**
-     * 发送文本消息
-     *
-     * @param user  用户ID，|分隔
-     * @param party 部门id，|分隔
-     * @param tag   标签id，|分隔
-     * @param msg   消息内容
-     */
-    public static String sendMsg(String user, String party, String tag, String msg) {
-        JSONObject params = new JSONObject();
-        params.put("msgtype", "text");
-        params.put("agentid", WechatAppConfiguration.get().getAgentId());
-        JSONObject content = new JSONObject();
-        content.put("content", msg);
-        params.put("text", content);
+
+    public static Map<String, String> createReceiver(String user, String party, String tag) {
+        Map<String, String> params = new HashMap<>();
         if (StringUtils.isNotBlank(user)) {
             params.put("touser", user);
         }
@@ -79,15 +76,157 @@ public class WeChatAPI {
         if (StringUtils.isNotBlank(tag)) {
             params.put("totag", tag);
         }
+        return params;
+    }
 
+    private static JSONObject createCommonParams(Map<String, String> receiver, String msgType) {
+        JSONObject params = new JSONObject();
+        params.put("msgtype", msgType);
+        params.put("agentid", WechatAppConfiguration.get().getAgentId());
+        for (Map.Entry<String, String> entry : receiver.entrySet()) {
+            params.put(entry.getKey(), entry.getValue());
+        }
+        return params;
+    }
+
+    private static JSONObject jsonOf(String key, Object value) {
+        JSONObject json = new JSONObject();
+        json.put(key, value);
+        return json;
+    }
+
+    private static JSONArray createArticles(String title, String imgId, String content, String digest) {
+        JSONObject article = new JSONObject();
+        article.put("title", title);
+        article.put("thumb_media_id", imgId);
+        article.put("content", content);
+//            article.put("content_source_url","");
+        if (StringUtils.isNotBlank(digest)) {
+            article.put("digest", digest);
+        }
+        JSONArray articles = new JSONArray();
+        articles.add(article);
+        return articles;
+    }
+
+    private static String sendBaseMsg(Map<String, String> receiver, String msgType, JSONObject content) {
+        JSONObject params = createCommonParams(receiver, msgType);
+        params.put(msgType, content);
         AccessToken accessToken = getAccessToken();
         String query = String.format(SEND_URL, accessToken.getToken());
         return post(query, params.toString());
     }
 
     /**
-     * 获取部门
+     * 发送文本消息
      *
+     * @param msg 消息内容
+     */
+    public static String sendMsg(Map<String, String> receiver, String msg) {
+        return sendBaseMsg(receiver, "text", jsonOf("content", msg));
+    }
+
+    /**
+     * 发送markdown消息
+     *
+     * @param receiver 接收人
+     * @param content  Markdown文本
+     */
+    public static String sendMarkdown(Map<String, String> receiver, String content) {
+        return sendBaseMsg(receiver, "markdown", jsonOf("content", content));
+    }
+
+
+    /**
+     * 发送图片消息
+     *
+     * @param receiver 接收人
+     * @param imgId    图片素材id
+     */
+    public static String sendImage(Map<String, String> receiver, String imgId) {
+        return sendBaseMsg(receiver, "image", jsonOf("media_id", imgId));
+    }
+
+    /**
+     * 发送文件
+     *
+     * @param receiver 接收人
+     * @param fileId   文件素材id
+     */
+    public static String sendFile(Map<String, String> receiver, String fileId) {
+        return sendBaseMsg(receiver, "file", jsonOf("media_id", fileId));
+    }
+
+    public static String sendCard(Map<String, String> receiver, String title, String description, String url, String btnText) {
+        JSONObject content = createCard(title, description, url, btnText);
+        return sendBaseMsg(receiver, "textcard", content);
+    }
+
+    private static JSONObject createCard(String title, String description, String url, String btnText) {
+        JSONObject content = new JSONObject();
+        content.put("title", title);
+        content.put("description", description);
+        content.put("url", url);
+        content.put("btntxt", btnText);
+        return content;
+    }
+
+    /**
+     * 发送图文消息
+     *
+     * @param title   标题
+     * @param content 内容
+     * @param imgId   封面素材id
+     */
+    public static String sendNews(Map<String, String> receiver, String title, String content, String digest, String imgId) {
+        JSONArray articles = createArticles(title, imgId, content, digest);
+        return sendBaseMsg(receiver, "mpnews", jsonOf("articles", articles));
+    }
+
+    private static String uploadMedia(String type, File file) {
+        try {
+            AccessToken accessToken = getAccessToken();
+            String query = String.format(UPLOAD_MEDIA, accessToken.getToken(), type);
+            PostMethod postMethod = new PostMethod(query);
+            FilePart part = new FilePart("media", file);
+            MultipartRequestEntity entity = new MultipartRequestEntity(new Part[]{part}, postMethod.getParams());
+            postMethod.setRequestEntity(entity);
+
+            HttpClient client = new HttpClient();
+            client.getHttpConnectionManager().getParams().setConnectionTimeout(30000);
+            int status = client.executeMethod(postMethod);
+            if (status == HttpStatus.SC_OK) {
+                String res = postMethod.getResponseBodyAsString();
+                JSONObject jsonObject = JSONObject.fromObject(res);
+                String mediaId = jsonObject.optString("media_id");
+                if (StringUtils.isEmpty(mediaId)) {
+                    System.out.println(res);
+                }
+                return mediaId;
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 上传图片
+     *
+     * @param img 图片
+     * @return 图片id, 上传失败为null
+     */
+    public static String uploadImg(File img) {
+        return uploadMedia("image", img);
+    }
+
+    public static String uploadFile(File file) {
+        return uploadMedia("file", file);
+    }
+
+    /**
+     * 获取部门
      */
     public static List<WechatDepartment> getDepartments() {
         List<WechatDepartment> list = new ArrayList<>();
@@ -120,11 +259,10 @@ public class WeChatAPI {
 
     /**
      * 获取所有成员
-     *
      */
-    public static Map<String,List<WechatUser>> getAllUsers(List<WechatDepartment> departments) {
+    public static Map<String, List<WechatUser>> getAllUsers(List<WechatDepartment> departments) {
         List<WechatDepartment> rootDepartments = Utils.getRootDepartments(departments);
-        Map<String,List<WechatUser>> map = new HashMap<>();
+        Map<String, List<WechatUser>> map = new HashMap<>();
 
         try {
             AccessToken token = getAccessToken();
@@ -158,7 +296,7 @@ public class WeChatAPI {
         return null;
     }
 
-    private static void addToDepartment(Map<String,List<WechatUser>> map, String depId, WechatUser user) {
+    private static void addToDepartment(Map<String, List<WechatUser>> map, String depId, WechatUser user) {
         List<WechatUser> userList = map.get(depId);
         if (userList == null) {
             userList = new ArrayList<>();
@@ -166,6 +304,7 @@ public class WeChatAPI {
         }
         userList.add(user);
     }
+
     /**
      * @return 所有标签
      */
@@ -218,12 +357,13 @@ public class WeChatAPI {
 
     /**
      * 创建群聊
-     * @param name 群聊名称,不可为空
-     * @param user 成员id列表,不少于2人
+     *
+     * @param name  群聊名称,不可为空
+     * @param user  成员id列表,不少于2人
      * @param owner 群主,如果为空则从列表随机选取一人
      * @return 群聊id
      */
-    public static String createChat(String name, List<String> user,String owner){
+    public static String createChat(String name, List<String> user, String owner) {
         if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("必须指定群聊名");
         }
@@ -233,14 +373,14 @@ public class WeChatAPI {
 
         try {
             AccessToken accessToken = getAccessToken();
-            String request = String.format(CREATE_CHAT,accessToken.getToken());
+            String request = String.format(CREATE_CHAT, accessToken.getToken());
             JSONObject params = new JSONObject();
-            params.put("name",name);
+            params.put("name", name);
             if (!StringUtils.isBlank(owner)) {
-                params.put("owner",owner);
+                params.put("owner", owner);
             }
-            params.put("userlist",JSONArray.fromObject(user));
-            String res = post(request,params.toString());
+            params.put("userlist", JSONArray.fromObject(user));
+            String res = post(request, params.toString());
             JSONObject obj = JSONObject.fromObject(res);
             if (obj.getInt("errcode") == 0) {
                 return obj.optString("chatid");
@@ -253,35 +393,96 @@ public class WeChatAPI {
         return null;
     }
 
-    /**
-     * 发送群消息
-     * @param chatId 群id
-     * @param msg 消息
-     */
-    public static String sendChatMsg(String chatId,String msg) {
+    private static String sendBaseChatMsg(String chatId, String type, JSONObject msg) {
         try {
             JSONObject params = new JSONObject();
-            params.put("chatid",chatId);
-            params.put("msgtype","text");
-            JSONObject content = new JSONObject();
-            content.put("content", msg);
-            params.put("text", content);
+            params.put("chatid", chatId);
+            params.put("msgtype", type);
+            params.put(type, msg);
             AccessToken accessToken = getAccessToken();
             String query = String.format(SEND_CHAT, accessToken.getToken());
             return post(query, params.toString());
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "error in send chat msg", e);
+            LOGGER.log(Level.WARNING, "error in send chat " + type, e);
         }
         return null;
     }
 
     /**
+     * 发送群消息
+     *
+     * @param chatId 群id
+     * @param msg    消息
+     */
+    public static String sendChatMsg(String chatId, String msg) {
+        return sendBaseChatMsg(chatId, "text", jsonOf("content", msg));
+    }
+
+    /**
+     * 发送群聊图片消息
+     *
+     * @param chatId  群id
+     * @param mediaId 图片素材id
+     */
+    public static String sendChatImage(String chatId, String mediaId) {
+        return sendBaseChatMsg(chatId, "image", jsonOf("media_id", mediaId));
+    }
+
+    /**
+     * 发送群聊文件消息
+     *
+     * @param chatId  群id
+     * @param mediaId 素材id
+     */
+    public static String sendChatFile(String chatId, String mediaId) {
+        return sendBaseChatMsg(chatId, "file", jsonOf("media_id", mediaId));
+    }
+
+    /**
+     * 发送群聊卡片消息
+     *
+     * @param chatId      群id
+     * @param title       标题
+     * @param description 描述
+     * @param url         调整url
+     * @param btnText     按钮文字
+     */
+    public static String sendChatCard(String chatId, String title, String description, String url, String btnText) {
+        JSONObject content = createCard(title, description, url, btnText);
+        return sendBaseChatMsg(chatId, "textcard", content);
+    }
+
+    /**
+     * 发送群聊图文消息
+     *
+     * @param chatId  群id
+     * @param title   标题
+     * @param content 内容
+     * @param imgId   图片素材id
+     */
+    public static String sendChatNews(String chatId, String title, String content, String digest, String imgId) {
+        JSONArray articles = createArticles(title, imgId, content, digest);
+        return sendBaseChatMsg(chatId, "mpnews", jsonOf("articles", articles));
+    }
+
+    /**
+     * 发送Markdown 格式的群消息
+     *
+     * @param chatId 群id
+     * @param msg    Markdown内容
+     */
+    public static String sendChatMarkdown(String chatId, String msg) {
+        return sendBaseChatMsg(chatId, "markdown", jsonOf("content", msg));
+    }
+
+    /**
      * 获取群聊信息
+     *
      * @param id 群id
      */
     public static Chat getChat(String id) {
         try {
-            String request =String.format(GET_CHAT,getAccessToken().getToken(),id);
+            String request = String.format(GET_CHAT, getAccessToken().getToken(), id);
             String res = get(request);
             JSONObject obj = JSONObject.fromObject(res);
             if (obj.getInt("errcode") == 0) {
@@ -302,17 +503,25 @@ public class WeChatAPI {
         return null;
     }
 
-    private static String get(String path) {
+    private static String readAsString(HttpURLConnection connection) {
         try {
-//            System.out.println(path);
-            URL url = new URL(path);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(10 * 1000);
             connection.setReadTimeout(10 * 1000);
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 InputStream inputStream = connection.getInputStream();
                 return IOUtils.toString(inputStream);
             }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "error in req " + connection.getURL(), e);
+        }
+        return "";
+    }
+
+    private static String get(String path) {
+        try {
+            URL url = new URL(path);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            return readAsString(connection);
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "error in req " + path, e);
         }
@@ -332,12 +541,7 @@ public class WeChatAPI {
             writer.print(params);
             writer.flush();
             writer.close();
-            connection.setConnectTimeout(10 * 1000);
-            connection.setReadTimeout(10 * 1000);
-            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                InputStream inputStream = connection.getInputStream();
-                return IOUtils.toString(inputStream);
-            }
+            return readAsString(connection);
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "error in post " + path, e);
         }
@@ -351,6 +555,7 @@ public class WeChatAPI {
             xmlFile.delete();
         }
     }
+
     private static AccessToken getAccessToken() {
         if (accessToken == null) {
             loadAccessToken();
@@ -362,6 +567,7 @@ public class WeChatAPI {
         }
         return accessToken;
     }
+
     private static void loadAccessToken() {
         try {
             accessToken = new AccessToken();
@@ -373,6 +579,7 @@ public class WeChatAPI {
             LOGGER.log(Level.WARNING, "error in load token", e);
         }
     }
+
     private static void saveAccessToken() {
         try {
             XmlFile xmlFile = new XmlFile(new File(Jenkins.getInstance().getRootDir(), CONFIG_FILE));

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
     <f:entry field="disablePublish" title="禁用发布消息" description="禁用后在构建结束时将不会发送任何微信消息">
         <f:checkbox default="${instance.disablePublish}"/>
     </f:entry>
@@ -30,11 +30,42 @@
             </table>
         </f:repeatable>
     </f:entry>
-
+<!--
     <f:entry field="successMsg" title="${%Success Message}" description="${%description(rootURL)}">
         <f:textarea/>
     </f:entry>
     <f:entry field="failedMsg" title="${%Failed Message}" description="${%description(rootURL)}">
         <f:textarea/>
+    </f:entry>
+    -->
+    <f:entry>
+        <j:set var="currentMsgType" value="${instance.successMsgType}"/>
+        <f:dropdownList name="successMsgType" title="${%Success Message}">
+            <j:forEach var="descriptor" items="${instance.msgTypeDescriptors}" varStatus="loop">
+                <j:set var="msgType" value="${descriptor==currentMsgType.descriptor?currentMsgType:null}"/>
+                <f:dropdownListBlock title="${descriptor.displayName}" value="${loop.index}"
+                                     selected="${msgType!=null}" staplerClass="${descriptor.clazz.name}">
+                    <!-- Include config.jelly for this msg type -->
+                    <st:include page="${descriptor.configPage}" from="${descriptor}"/>
+                </f:dropdownListBlock>
+            </j:forEach>
+        </f:dropdownList>
+    </f:entry>
+
+    <f:entry>
+        <st:adjunct includes="org.kohsuke.stapler.codemirror.lib.codemirror,
+                            org.kohsuke.stapler.codemirror.theme.default
+                            "/>
+        <j:set var="currentMsgType" value="${instance.failMsgType}"/>
+        <f:dropdownList name="failMsgType" title="${%Failed Message}">
+            <j:forEach var="descriptor" items="${instance.msgTypeDescriptors}" varStatus="loop">
+                <j:set var="msgType" value="${descriptor==currentMsgType.descriptor?currentMsgType:null}"/>
+                <f:dropdownListBlock title="${descriptor.displayName}" value="${loop.index}"
+                                     selected="${msgType!=null}" staplerClass="${descriptor.clazz.name}">
+                    <!-- Include config.jelly for this msg type -->
+                    <st:include page="${descriptor.configPage}" from="${descriptor}"/>
+                </f:dropdownListBlock>
+            </j:forEach>
+        </f:dropdownList>
     </f:entry>
 </j:jelly>
