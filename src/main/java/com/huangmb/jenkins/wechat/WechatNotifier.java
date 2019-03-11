@@ -25,7 +25,13 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class WechatNotifier extends Notifier {
     private Set<String> userSet = new HashSet<>();
@@ -39,17 +45,16 @@ public class WechatNotifier extends Notifier {
     private MessageType successMsgType;
     private MessageType failMsgType;
 
-//    private String successMsg;
-//    private String failedMsg;
+    private String successMsg;
+    private String failedMsg;
 
-    private boolean isNews;
 
     @DataBoundConstructor
-    public WechatNotifier(boolean disablePublish, List<Receiver> receivers, MessageType successMsgType, MessageType failMsgType) {
+    public WechatNotifier(boolean disablePublish, List<Receiver> receivers,String successMsg,String failedMsg, MessageType successMsgType, MessageType failMsgType) {
         this.disablePublish = disablePublish;
         this.receivers = new ArrayList<>(receivers);
-//        this.successMsg = successMsg;
-//        this.failedMsg = failedMsg;
+        this.successMsg = successMsg;
+        this.failedMsg = failedMsg;
         this.successMsgType = successMsgType;
         this.failMsgType = failMsgType;
     }
@@ -93,15 +98,6 @@ public class WechatNotifier extends Notifier {
         return result;
     }
 
-    public boolean isNews() {
-        return isNews;
-    }
-
-    @DataBoundSetter
-    public void setNews(boolean news) {
-        isNews = news;
-    }
-
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
@@ -133,6 +129,7 @@ public class WechatNotifier extends Notifier {
             return true;
         }
 
+        doCompatible();
         MessageType messageType = build.getResult() == Result.SUCCESS ? successMsgType : failMsgType;
         if (messageType == null) {
             logger.println("未填写消息内容");
@@ -160,6 +157,18 @@ public class WechatNotifier extends Notifier {
             logger.println("微信通知发送失败: " + e.getMessage());
         }
         return true;
+    }
+
+    /**
+     * 兼容旧版本
+     */
+    private void doCompatible() {
+        if (successMsgType == null && StringUtils.isNotEmpty(successMsg)) {
+            successMsgType = new Text(successMsg);
+        }
+        if (failMsgType == null && StringUtils.isNotEmpty(failedMsg)) {
+            failMsgType = new Text(failedMsg);
+        }
     }
 
     private void updateReceivers() {
