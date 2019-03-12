@@ -50,13 +50,12 @@ public class WechatNotifier extends Notifier {
 
 
     @DataBoundConstructor
-    public WechatNotifier(boolean disablePublish, List<Receiver> receivers,String successMsg,String failedMsg, MessageType successMsgType, MessageType failMsgType) {
+    public WechatNotifier(boolean disablePublish, List<Receiver> receivers, MessageType successMsgType, MessageType failMsgType) {
         this.disablePublish = disablePublish;
         this.receivers = new ArrayList<>(receivers);
-        this.successMsg = successMsg;
-        this.failedMsg = failedMsg;
         this.successMsgType = successMsgType;
         this.failMsgType = failMsgType;
+        doCompatible();
     }
 
     public boolean isDisablePublish() {
@@ -78,10 +77,12 @@ public class WechatNotifier extends Notifier {
     }
 
     public MessageType getSuccessMsgType() {
+        doCompatible();
         return successMsgType;
     }
 
     public MessageType getFailMsgType() {
+        doCompatible();
         return failMsgType;
     }
 
@@ -111,6 +112,7 @@ public class WechatNotifier extends Notifier {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+        doCompatible();
         PrintStream logger = listener.getLogger();
         if (disablePublish) {
             logger.println("本次构建不发布微信消息，启用微信通知请在设置中取消勾选禁用发送");
@@ -129,7 +131,6 @@ public class WechatNotifier extends Notifier {
             return true;
         }
 
-        doCompatible();
         MessageType messageType = build.getResult() == Result.SUCCESS ? successMsgType : failMsgType;
         if (messageType == null) {
             logger.println("未填写消息内容");
@@ -165,9 +166,13 @@ public class WechatNotifier extends Notifier {
     private void doCompatible() {
         if (successMsgType == null && StringUtils.isNotEmpty(successMsg)) {
             successMsgType = new Text(successMsg);
+            successMsg = null;
+            getDescriptor().save();
         }
         if (failMsgType == null && StringUtils.isNotEmpty(failedMsg)) {
             failMsgType = new Text(failedMsg);
+            failedMsg = null;
+            getDescriptor().save();
         }
     }
 
