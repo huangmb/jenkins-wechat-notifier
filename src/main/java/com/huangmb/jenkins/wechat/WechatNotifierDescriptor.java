@@ -5,16 +5,22 @@ import com.huangmb.jenkins.wechat.bean.CustomGroup;
 import com.huangmb.jenkins.wechat.bean.WechatDepartment;
 import com.huangmb.jenkins.wechat.bean.WechatTag;
 import com.huangmb.jenkins.wechat.bean.WechatUser;
+import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.model.AbstractProject;
+import hudson.model.Descriptor;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Publisher;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Extension
@@ -40,6 +46,19 @@ public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
     @Override
     public String getDisplayName() {
         return "微信通知";
+    }
+
+    public List<Descriptor<WechatNotifier.MessageType>> getMsgTypeDescriptors() {
+        DescriptorExtensionList<WechatNotifier.MessageType, Descriptor<WechatNotifier.MessageType>> list = Jenkins.getInstance().getDescriptorList(WechatNotifier.MessageType.class);
+
+        List<Descriptor<WechatNotifier.MessageType>> result = new ArrayList<>(list);
+        Collections.sort(result, new Comparator<Descriptor<WechatNotifier.MessageType>>() {
+            @Override
+            public int compare(Descriptor<WechatNotifier.MessageType> o1, Descriptor<WechatNotifier.MessageType> o2) {
+                return ((WechatNotifier.MessageTypeDescriptor) o1).getOrder() - ((WechatNotifier.MessageTypeDescriptor) o2).getOrder();
+            }
+        });
+        return result;
     }
 
     public ListBoxModel doFillTypeItems() {

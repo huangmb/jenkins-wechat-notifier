@@ -3,7 +3,6 @@ package com.huangmb.jenkins.wechat;
 import com.huangmb.jenkins.wechat.bean.Chat;
 import com.huangmb.jenkins.wechat.bean.CustomGroup;
 import com.huangmb.jenkins.wechat.bean.Receiver;
-import hudson.DescriptorExtensionList;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.ExtensionPoint;
@@ -26,8 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -86,18 +83,6 @@ public class WechatNotifier extends Notifier {
         return failMsgType;
     }
 
-    public List<Descriptor<MessageType>> getMsgTypeDescriptors() {
-        DescriptorExtensionList<MessageType, Descriptor<MessageType>> list = Jenkins.getInstance().getDescriptorList(MessageType.class);
-
-        List<Descriptor<MessageType>> result = new ArrayList<>(list);
-        Collections.sort(result, new Comparator<Descriptor<MessageType>>() {
-            @Override
-            public int compare(Descriptor<MessageType> o1, Descriptor<MessageType> o2) {
-                return ((MessageTypeDescriptor) o1).getOrder() - ((MessageTypeDescriptor) o2).getOrder();
-            }
-        });
-        return result;
-    }
 
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
