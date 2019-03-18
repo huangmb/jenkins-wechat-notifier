@@ -31,10 +31,10 @@ import java.util.Map;
 import java.util.Set;
 
 public class WechatNotifier extends Notifier {
-    private Set<String> userSet = new HashSet<>();
-    private Set<String> partySet = new HashSet<>();
-    private Set<String> tagSet = new HashSet<>();
-    private Set<String> chatSet = new HashSet<>();
+    private transient Set<String> userSet = new HashSet<>();
+    private transient Set<String> partySet = new HashSet<>();
+    private transient Set<String> tagSet = new HashSet<>();
+    private transient Set<String> chatSet = new HashSet<>();
 
     private boolean disablePublish;
     private List<Receiver> receivers;
@@ -162,10 +162,10 @@ public class WechatNotifier extends Notifier {
     }
 
     private void updateReceivers() {
-        userSet.clear();
-        partySet.clear();
-        tagSet.clear();
-        chatSet.clear();
+        userSet = new HashSet<>();
+        tagSet = new HashSet<>();
+        partySet = new HashSet<>();
+        chatSet = new HashSet<>();
         if (receivers == null) {
             return;
         }
