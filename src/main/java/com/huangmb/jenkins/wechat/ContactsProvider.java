@@ -52,7 +52,7 @@ public class ContactsProvider {
             userModel.add("选择一个用户", "-1");
 
             for (WechatUser user : getAllUsers()) {
-                userModel.add(user.getName(), user.getId());
+                userModel.add(user.getName()+"("+user.getId()+")", user.getId());
             }
         }
         return userModel;

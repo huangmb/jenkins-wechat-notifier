@@ -32,7 +32,7 @@
                 <f:bottomButtonBar>
                     <j:if test="${h.hasPermission(app.ADMINISTER)}">
                     <div class="yui-button danger">
-                        <button onclick="showDeleteChatDialog()" tooltip="从Jenkins中移除该群聊,不会删除微信中的群聊">移除</button>
+                        <button onclick="showDeleteChatDialog()" tooltip="从Jenkins中移除该群聊,不会删除企业微信中的群聊">移除</button>
                     </div>
                     <div class="yui-button">
                         <button onclick="refreshChat()" tooltip="从微信服务器更新群聊信息">更新</button>

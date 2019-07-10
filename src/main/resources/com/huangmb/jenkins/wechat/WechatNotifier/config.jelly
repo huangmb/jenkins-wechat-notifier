@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
-    <f:entry field="disablePublish" title="禁用发布消息" description="禁用后在构建结束时将不会发送任何微信消息">
+    <f:entry field="disablePublish" title="禁用发布消息" description="禁用后在构建结束时将不会发送任何企业微信消息">
         <f:checkbox default="${instance.disablePublish}"/>
     </f:entry>
     <f:entry field="receiver" description="企业微信应用每天发送消息数有限制的，一般为当前企业上限人数 * 30,发送到部门以部门总人数计算条数，请尽量缩小发送范围">

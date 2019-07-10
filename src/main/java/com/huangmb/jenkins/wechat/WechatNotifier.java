@@ -3,18 +3,12 @@ package com.huangmb.jenkins.wechat;
 import com.huangmb.jenkins.wechat.bean.Chat;
 import com.huangmb.jenkins.wechat.bean.CustomGroup;
 import com.huangmb.jenkins.wechat.bean.Receiver;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.ExtensionPoint;
-import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
-import hudson.model.Result;
+import hudson.*;
+import hudson.model.*;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import jenkins.model.Jenkins;
+import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -30,13 +24,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class WechatNotifier extends Notifier {
+public class WechatNotifier extends Notifier implements SimpleBuildStep {
     private transient Set<String> userSet = new HashSet<>();
     private transient Set<String> partySet = new HashSet<>();
     private transient Set<String> tagSet = new HashSet<>();
     private transient Set<String> chatSet = new HashSet<>();
 
-    private boolean disablePublish;
+    private boolean disablePublish = false;
     private List<Receiver> receivers;
 
     private MessageType successMsgType;
@@ -45,13 +39,23 @@ public class WechatNotifier extends Notifier {
     private String successMsg;
     private String failedMsg;
 
+    // Properties for pipeline usage, support group/user & markdown msg only
+    private String chatId;
+    private String userId;
+    private String successMarkdownMsg;
+    private String failMarkdownMsg;
+
 
     @DataBoundConstructor
+    public WechatNotifier() {
+    }
+
+    @Deprecated
     public WechatNotifier(boolean disablePublish, List<Receiver> receivers, MessageType successMsgType, MessageType failMsgType) {
         this.disablePublish = disablePublish;
         this.receivers = new ArrayList<>(receivers);
-        this.successMsgType = successMsgType;
-        this.failMsgType = failMsgType;
+        this.setSuccessMsgType(successMsgType);
+        this.setFailMsgType(failMsgType);
         doCompatible();
     }
 
@@ -66,7 +70,17 @@ public class WechatNotifier extends Notifier {
 
     @DataBoundSetter
     public void setReceivers(List<Receiver> receivers) {
-        this.receivers = receivers;
+        this.receivers = new ArrayList<>(receivers);
+    }
+
+    @DataBoundSetter
+    public void setSuccessMsgType(MessageType successMsgType) {
+        this.successMsgType = successMsgType;
+    }
+
+    @DataBoundSetter
+    public void setFailMsgType(MessageType failMsgType) {
+        this.failMsgType = failMsgType;
     }
 
     public List<Receiver> getReceivers() {
@@ -74,13 +88,41 @@ public class WechatNotifier extends Notifier {
     }
 
     public MessageType getSuccessMsgType() {
-        doCompatible();
         return successMsgType;
     }
 
     public MessageType getFailMsgType() {
-        doCompatible();
         return failMsgType;
+    }
+
+    @DataBoundSetter
+    public void setChatId(String chatId) {
+        this.chatId = chatId;
+        if (this.receivers == null) {
+            this.receivers = new ArrayList<>(1);
+        }
+        this.receivers.add(new Receiver("chat", this.chatId));
+    }
+
+    @DataBoundSetter
+    public void setUserId(String userId) {
+        this.userId = userId;
+        if (this.receivers == null) {
+            this.receivers = new ArrayList<>(1);
+        }
+        this.receivers.add(new Receiver("user", this.userId));
+    }
+
+    @DataBoundSetter
+    public void setSuccessMarkdownMsg(String successMarkdownMsg) {
+        this.successMarkdownMsg = successMarkdownMsg;
+        this.setSuccessMsgType(new Markdown(successMarkdownMsg));
+    }
+
+    @DataBoundSetter
+    public void setFailMarkdownMsg(String failMarkdownMsg) {
+        this.failMarkdownMsg = failMarkdownMsg;
+        this.setFailMsgType(new Markdown(failMarkdownMsg));
     }
 
 
@@ -94,14 +136,13 @@ public class WechatNotifier extends Notifier {
         return (WechatNotifierDescriptor) super.getDescriptor();
     }
 
-
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+    public void perform(@Nonnull Run<?, ?> currentBuild, @Nonnull FilePath filePath, @Nonnull Launcher launcher, @Nonnull TaskListener taskListener) throws InterruptedException, IOException {
         doCompatible();
-        PrintStream logger = listener.getLogger();
+        PrintStream logger = taskListener.getLogger();
         if (disablePublish) {
-            logger.println("本次构建不发布微信消息，启用微信通知请在设置中取消勾选禁用发送");
-            return true;
+            logger.println("本次构建不发布企业微信消息，启用微信通知请在设置中取消勾选禁用发送");
+            return ;
         }
         updateReceivers();
         String user = StringUtils.join(userSet, "|");
@@ -112,22 +153,22 @@ public class WechatNotifier extends Notifier {
         boolean hasReceiver = !receiver.isEmpty();
         boolean hasChat = !chatSet.isEmpty();
         if (!hasReceiver && !hasChat) {
-            logger.println("未填写任何微信接收人");
-            return true;
+            logger.println("未找到任何企业微信接收人，pipeline模式请确保 chatId/userId 已在此插件中存在");
+            return ;
         }
 
-        MessageType messageType = build.getResult() == Result.SUCCESS ? successMsgType : failMsgType;
+        MessageType messageType = currentBuild.getResult() == Result.SUCCESS ? getSuccessMsgType() : getFailMsgType();
         if (messageType == null) {
             logger.println("未填写消息内容");
-            return true;
+            return ;
         }
 
-        EnvVars env = build.getEnvironment(listener);
+        EnvVars env = currentBuild.getEnvironment(taskListener);
         messageType.setLogger(logger);
         messageType.setEnvVars(env);
         if (!messageType.checkValue()) {
-            logger.println("输入不合法");
-            return true;
+            logger.println("消息内容输入不合法");
+            return ;
         }
 
         //填充环境变量
@@ -140,22 +181,26 @@ public class WechatNotifier extends Notifier {
             }
 
         } catch (Exception e) {
-            logger.println("微信通知发送失败: " + e.getMessage());
+            logger.println("企业微信通知发送失败: " + e.getMessage());
         }
-        return true;
     }
+
+//    @Override
+//    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+//
+//    }
 
     /**
      * 兼容旧版本
      */
     private void doCompatible() {
-        if (successMsgType == null && StringUtils.isNotEmpty(successMsg)) {
-            successMsgType = new Text(successMsg);
+        if (getSuccessMsgType() == null && StringUtils.isNotEmpty(successMsg)) {
+            setSuccessMsgType(new Text(successMsg));
             successMsg = null;
             getDescriptor().save();
         }
-        if (failMsgType == null && StringUtils.isNotEmpty(failedMsg)) {
-            failMsgType = new Text(failedMsg);
+        if (getFailMsgType() == null && StringUtils.isNotEmpty(failedMsg)) {
+            setFailMsgType(new Text(failedMsg));
             failedMsg = null;
             getDescriptor().save();
         }
@@ -211,7 +256,6 @@ public class WechatNotifier extends Notifier {
         }
 
     }
-
 
     public static abstract class MessageType implements ExtensionPoint, Describable<MessageType> {
         protected String name;
@@ -292,10 +336,10 @@ public class WechatNotifier extends Notifier {
                 JSONObject obj = JSONObject.fromObject(resp);
                 int errcode = obj.getInt("errcode");
                 if (errcode != 0) {
-                    logger.println("微信通知发送失败:" + resp);
+                    logger.println("企业微信通知发送失败:" + resp);
                     return;
                 }
-                logger.println("微信通知发送成功");
+                logger.println("企业微信通知发送成功");
 
                 String invaliduser = obj.optString("invaliduser");
                 String invalidparty = obj.optString("invalidparty");
@@ -426,7 +470,6 @@ public class WechatNotifier extends Notifier {
         public static final MessageTypeDescriptor D = new MessageTypeDescriptor(Markdown.class, "Markdown", 2);
 
     }
-
 
     /**
      * 带附件的消息,如文件消息\图片消息\图文消息等
@@ -664,6 +707,4 @@ public class WechatNotifier extends Notifier {
         @Extension
         public static final MessageTypeDescriptor D = new MessageTypeDescriptor(Card.class, "卡片消息", 5);
     }
-
-
 }

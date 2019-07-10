@@ -7,6 +7,7 @@ import com.huangmb.jenkins.wechat.bean.WechatTag;
 import com.huangmb.jenkins.wechat.bean.WechatUser;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
+import org.jenkinsci.Symbol;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.tasks.BuildStepDescriptor;
@@ -24,6 +25,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Extension
+@Symbol("weworkchatknotify")
 public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
 
     public WechatNotifierDescriptor() {
@@ -45,7 +47,7 @@ public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
     @Nonnull
     @Override
     public String getDisplayName() {
-        return "微信通知";
+        return "企业微信通知";
     }
 
     public List<Descriptor<WechatNotifier.MessageType>> getMsgTypeDescriptors() {
@@ -82,7 +84,7 @@ public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
                 title = users.isEmpty() ? "无可选用户" : "请选择一个用户";
                 model.add(title, "-1");
                 for (WechatUser user : users) {
-                    model.add(user.getName(), user.getId());
+                    model.add(user.getName()+"("+user.getId()+")", user.getId());
                 }
                 return model;
             case "party":
@@ -90,7 +92,7 @@ public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
                 title = departments.isEmpty() ? "无可选部门" : "请选择一个部门";
                 model.add(title, "-1");
                 for (WechatDepartment department : departments) {
-                    model.add(department.getDisplayName(), department.getId());
+                    model.add(department.getDisplayName()+"("+department.getId()+")", department.getId());
                 }
                 return model;
             case "tag":
@@ -114,7 +116,7 @@ public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
                 title = chats.isEmpty() ? "无群聊" : "请选择一个群聊";
                 model.add(title,"-1");
                 for (Chat chat : chats) {
-                    model.add(chat.getName(), chat.getChatId());
+                    model.add(chat.getName()+"("+chat.getChatId()+")", chat.getChatId());
                 }
                 return model;
             default:

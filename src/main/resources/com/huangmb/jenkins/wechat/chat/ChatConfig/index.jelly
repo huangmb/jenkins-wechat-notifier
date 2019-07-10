@@ -23,12 +23,16 @@
                 </f:entry>
                 <table width="100%">
                     <tr align="left">
-                        <th width="10%">序号</th>
+                        <th width="5%">序号</th>
+                        <th width="15%" align="left">群聊ID</th>
                         <th align="left">群聊名称</th>
                     </tr>
                     <j:forEach var="chat" items="${it.chats}" indexVar="index">
                         <tr>
                             <td>${index}</td>
+                            <td>
+                                ${chat.chatId}
+                            </td>
                             <td>
                                 <f:link href="${index}">${chat.name}</f:link>
                             </td>
