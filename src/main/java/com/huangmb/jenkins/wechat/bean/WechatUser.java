@@ -4,6 +4,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class WechatUser {
     private String id;
+    private String email;
     private String name;
 
     public WechatUser() {
@@ -19,9 +20,10 @@ public class WechatUser {
             id = idAndName;
         }
     }
-    public WechatUser(String id, String name) {
+    public WechatUser(String id, String name, String email) {
         this.id = id;
         this.name = name;
+        this.setEmail(email);
     }
 
     public String getId() {
@@ -38,5 +40,18 @@ public class WechatUser {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    @Override
+    public boolean equals(Object target) {
+        return this.id != null && ((WechatUser)target).getId() != null && this.id.equals(((WechatUser)target).getId());
     }
 }

@@ -17,6 +17,8 @@ public class ContactsProvider {
     //部门-部门人员
     private Map<String, List<WechatUser>> departmentAndUserMap;
     private Map<String, String> userIdAndNameMap;
+    //邮箱-人员
+    private Map<String, WechatUser> emailAndUserMap;
 
     private ListBoxModel userModel;
 
@@ -52,7 +54,7 @@ public class ContactsProvider {
             userModel.add("选择一个用户", "-1");
 
             for (WechatUser user : getAllUsers()) {
-                userModel.add(user.getName()+"("+user.getId()+")", user.getId());
+                userModel.add(user.getName(), user.getId());
             }
         }
         return userModel;
@@ -69,6 +71,11 @@ public class ContactsProvider {
             names.add(name);
         }
         return names;
+    }
+
+    public String getUserId(String email) {
+        loadUserAndDepartmentListIfNeeded();
+        return emailAndUserMap.get(email).getId();
     }
 
     public String getUserName(String id) {
@@ -98,6 +105,7 @@ public class ContactsProvider {
         departments = null;
         tags = null;
         userModel = null;
+        emailAndUserMap = null;
     }
 
     private void loadUserAndDepartmentListIfNeeded() {
@@ -124,13 +132,17 @@ public class ContactsProvider {
             }
         }
         if (users == null && departmentAndUserMap != null) {
-            users = new ArrayList<>();
             userIdAndNameMap = new HashMap<>();
+            emailAndUserMap = new HashMap<>();
+            // 用Set去重
+            Set<WechatUser> usersSet = new HashSet<WechatUser>();
             for (List<WechatUser> userList : departmentAndUserMap.values()) {
-                users.addAll(userList);
+                usersSet.addAll(userList);
             }
+            users = new ArrayList<>(usersSet);
             for (WechatUser user : users) {
                 userIdAndNameMap.put(user.getId(), user.getName());
+                emailAndUserMap.put(user.getEmail(), user);
             }
             Collections.sort(users, new Comparator<WechatUser>() {
                 @Override

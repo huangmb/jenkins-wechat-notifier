@@ -84,7 +84,7 @@ public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
                 title = users.isEmpty() ? "无可选用户" : "请选择一个用户";
                 model.add(title, "-1");
                 for (WechatUser user : users) {
-                    model.add(user.getName()+"("+user.getId()+")", user.getId());
+                    model.add(user.getName(), user.getId());
                 }
                 return model;
             case "party":
@@ -92,7 +92,7 @@ public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
                 title = departments.isEmpty() ? "无可选部门" : "请选择一个部门";
                 model.add(title, "-1");
                 for (WechatDepartment department : departments) {
-                    model.add(department.getDisplayName()+"("+department.getId()+")", department.getId());
+                    model.add(department.getDisplayName(), department.getId());
                 }
                 return model;
             case "tag":
@@ -116,7 +116,7 @@ public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
                 title = chats.isEmpty() ? "无群聊" : "请选择一个群聊";
                 model.add(title,"-1");
                 for (Chat chat : chats) {
-                    model.add(chat.getName()+"("+chat.getChatId()+")", chat.getChatId());
+                    model.add(chat.getName(), chat.getChatId());
                 }
                 return model;
             default:

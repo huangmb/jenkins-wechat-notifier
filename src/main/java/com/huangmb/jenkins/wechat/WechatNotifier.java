@@ -18,11 +18,7 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class WechatNotifier extends Notifier implements SimpleBuildStep {
     private transient Set<String> userSet = new HashSet<>();
@@ -40,8 +36,8 @@ public class WechatNotifier extends Notifier implements SimpleBuildStep {
     private String failedMsg;
 
     // Properties for pipeline usage, support group/user & markdown msg only
-    private String chatId;
-    private String userId;
+    private String chatIds;
+    private String userEmails;
     private String successMarkdownMsg;
     private String failMarkdownMsg;
 
@@ -96,22 +92,36 @@ public class WechatNotifier extends Notifier implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setChatId(String chatId) {
-        this.chatId = chatId;
+    public void setChatIds(String chatIds) {
+        this.chatIds = chatIds;
+
         if (this.receivers == null) {
             this.receivers = new ArrayList<>(1);
         }
-        this.receivers.add(new Receiver("chat", this.chatId));
+
+        List<String> _chatIds = Arrays.asList(this.chatIds.split(","));
+        for(String _cid : _chatIds) {
+            this.receivers.add(new Receiver("chat", _cid));
+        }
     }
 
     @DataBoundSetter
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUserEmails(String userEmails) {
+        this.userEmails = userEmails;
+
         if (this.receivers == null) {
             this.receivers = new ArrayList<>(1);
         }
-        this.receivers.add(new Receiver("user", this.userId));
+
+        List<String> _emails = Arrays.asList(this.userEmails.split(","));
+        for(String _email : _emails) {
+            String uid = ContactsProvider.getInstance().getUserId(_email);
+            if (uid != null) {
+                this.receivers.add(new Receiver("user", uid));
+            }
+        }
     }
+
 
     @DataBoundSetter
     public void setSuccessMarkdownMsg(String successMarkdownMsg) {

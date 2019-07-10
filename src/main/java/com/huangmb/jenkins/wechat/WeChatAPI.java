@@ -44,7 +44,9 @@ public class WeChatAPI {
     //获取部门
     private static final String GET_DEPARTMENT_URL = "https://qyapi.weixin.qq.com/cgi-bin/department/list?access_token=%s";// + "&id=%s";
     //获取部门成员
-    private static final String GET_USER_BY_DEPARTMENT = "https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token=%s&department_id=%s&fetch_child=%d";
+    private static final String GET_USER_BY_DEPARTMENT_SIMPLE_URL = "https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token=%s&department_id=%s&fetch_child=%d";
+    //获取部门成员详情
+    private static final String GET_USER_BY_DEPARTMENT__URL = "https://qyapi.weixin.qq.com/cgi-bin/user/list?access_token=%s&department_id=%s&fetch_child=%d";
     //获取标签
     private static final String GET_TAGS_URL = "https://qyapi.weixin.qq.com/cgi-bin/tag/list?access_token=%s";
     //创建群聊
@@ -267,7 +269,7 @@ public class WeChatAPI {
         try {
             AccessToken token = getAccessToken();
             for (WechatDepartment department : rootDepartments) {
-                String query = String.format(GET_USER_BY_DEPARTMENT, token.getToken(), department.getId(), 1);
+                String query = String.format(GET_USER_BY_DEPARTMENT__URL, token.getToken(), department.getId(), 1);
                 String resp = get(query);
                 JSONObject obj = JSONObject.fromObject(resp);
                 if (obj.getInt("errcode") == 0) {
@@ -277,11 +279,13 @@ public class WeChatAPI {
                         JSONObject user = userList.getJSONObject(i);
                         String userId = user.getString("userid");
                         String name = user.getString("name");
+                        String email = user.getString("email");
                         JSONArray dep = user.optJSONArray("department");
 
                         WechatUser u = new WechatUser();
                         u.setId(userId);
                         u.setName(name);
+                        u.setEmail(email);
 
                         for (int j = 0, n = dep.size(); j < n; j++) {
                             addToDepartment(map, dep.optString(j), u);
