@@ -55,6 +55,22 @@ public class WechatNotifier extends Notifier implements SimpleBuildStep {
         doCompatible();
     }
 
+    public String getChatIds() {
+        return chatIds;
+    }
+
+    public String getUserEmails() {
+        return userEmails;
+    }
+
+    public String getSuccessMarkdownMsg() {
+        return successMarkdownMsg;
+    }
+
+    public String getFailMarkdownMsg() {
+        return failMarkdownMsg;
+    }
+
     public boolean isDisablePublish() {
         return disablePublish;
     }
@@ -154,7 +170,8 @@ public class WechatNotifier extends Notifier implements SimpleBuildStep {
             logger.println("本次构建不发布企业微信消息，启用微信通知请在设置中取消勾选禁用发送");
             return ;
         }
-        updateReceivers();
+        final EnvVars env = currentBuild.getEnvironment(taskListener);
+        updateReceivers(logger, env);
         String user = StringUtils.join(userSet, "|");
         String party = StringUtils.join(partySet, "|");
         String tag = StringUtils.join(tagSet, "|");
@@ -173,7 +190,6 @@ public class WechatNotifier extends Notifier implements SimpleBuildStep {
             return ;
         }
 
-        EnvVars env = currentBuild.getEnvironment(taskListener);
         messageType.setLogger(logger);
         messageType.setEnvVars(env);
         if (!messageType.checkValue()) {
@@ -216,7 +232,7 @@ public class WechatNotifier extends Notifier implements SimpleBuildStep {
         }
     }
 
-    private void updateReceivers() {
+    private void updateReceivers(PrintStream logger, EnvVars env) {
         userSet = new HashSet<>();
         tagSet = new HashSet<>();
         partySet = new HashSet<>();
@@ -239,19 +255,7 @@ public class WechatNotifier extends Notifier implements SimpleBuildStep {
                     tagSet.add(receiver.getId());
                     break;
                 case "group":
-                    List<CustomGroup> customGroups = ContactsProvider.getInstance().getCustomGroups();
-                    for (CustomGroup group : customGroups) {
-                        if (StringUtils.equals(group.getName(), receiver.getId())) {
-                            List<String> users = group.getUsers();
-                            for (String user : users) {
-                                if ("-1".equals(user)) {
-                                    continue;
-                                }
-                                userSet.add(user);
-                            }
-                            break;
-                        }
-                    }
+                    addGroupUserToSet(receiver.getId());
                     break;
                 case "chat":
                     List<Chat> chats = ContactsProvider.getInstance().getChats();
@@ -262,9 +266,42 @@ public class WechatNotifier extends Notifier implements SimpleBuildStep {
                         }
                     }
                     break;
+                case "variable":
+                    String vid = receiver.getId();
+                    String value = env.expand(vid);
+                    logger.println(receiver.getType() + ":" + vid + ":" + value);
+                    if (vid.endsWith("Email}")) {
+                        String uid = ContactsProvider.getInstance().getUserId(value);
+                        if (uid != null) {
+                            userSet.add(uid);
+                        }
+                    } else if (vid.endsWith("Party}")) {
+                        partySet.add(value);
+                    } else if (vid.endsWith("Tag}")) {
+                        tagSet.add(value);
+                    } else if (vid.endsWith("Group}")) {
+                        addGroupUserToSet(value);
+                    } else if (vid.endsWith("Chat}")) {
+                        chatSet.add(value);
+                    }
+                    break;
             }
         }
+    }
 
+    private void addGroupUserToSet(String groupName) {
+        List<CustomGroup> customGroups = ContactsProvider.getInstance().getCustomGroups();
+        for (CustomGroup group : customGroups) {
+            if (StringUtils.equals(group.getName(), groupName)) {
+                List<String> users = group.getUsers();
+                for (String user : users) {
+                    if ("-1".equals(user)) {
+                        continue;
+                    }
+                    userSet.add(user);
+                }
+            }
+        }
     }
 
     public static abstract class MessageType implements ExtensionPoint, Describable<MessageType> {

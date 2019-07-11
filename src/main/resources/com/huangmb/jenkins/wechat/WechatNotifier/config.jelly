@@ -12,8 +12,6 @@
                         <f:entry title="类型" field="type">
                             <f:select default="${receiver.type}"/>
                         </f:entry>
-                    </td>
-                    <td>
                         <f:entry title="请选择" field="id">
                             <f:select default="${receiver.id}"/>
                         </f:entry>

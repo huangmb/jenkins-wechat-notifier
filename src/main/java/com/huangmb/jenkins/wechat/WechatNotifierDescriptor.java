@@ -70,6 +70,7 @@ public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
         model.add("部门", "party");
         model.add("标签", "tag");
         model.add("自定义分组", "group");
+        model.add("自定义变量", "variable"); // 支持从环境变量中获取要发送的对象，可以是邮箱或者群聊
         return model;
     }
 
@@ -118,6 +119,17 @@ public class WechatNotifierDescriptor extends BuildStepDescriptor<Publisher> {
                 for (Chat chat : chats) {
                     model.add(chat.getName(), chat.getChatId());
                 }
+                return model;
+            case "variable":
+                model.add("请选择一个环境变量");
+                String variablePrefix = "WeWorkChatVariable";
+                String variableTemplate = "${%s%s}";
+                String[] types = new String[]{"Email", "Party", "Tag", "Group", "Chat"};
+
+                for (String t : types) {
+                    model.add(variablePrefix+t, String.format(variableTemplate, variablePrefix, t));
+                }
+
                 return model;
             default:
                 return new ListBoxModel();
